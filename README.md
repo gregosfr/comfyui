@@ -5,3 +5,5 @@ Onglet	Contenu
 ⚡ GPU Guide	14 GPU RTX 3060→5090, fiche RTX 3070 Ti, box Ideogram GPU, flags, budgets
 💡 Optimisation	Flags, GGUF, CPU offload, CFG, samplers, vidéo, système
 ⚙️ Nodes Speed	TeaCache, SageAttention, MagCache, WaveSpeed, Torch Compile, Nunchaku + stacks
+
+https://gregosfr.github.io/comfyui/
