@@ -1,0 +1,2897 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ComfyUI — Modèles 2025/2026 & Guide GPU NVIDIA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root {
+      --neon: #00e5ff;
+      --neon2: #a855f7;
+      --dark: #0a0a12;
+      --card: #0f0f1e;
+      --card2: #13132a;
+      --border: #1e1e3f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--dark);
+      color: #e2e8f0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a12; }
+    ::-webkit-scrollbar-thumb { background: #2d2d5e; border-radius: 3px; }
+
+    /* ── HERO ── */
+    .hero-bg {
+      background: linear-gradient(135deg, #0a0a12 0%, #0d0d2e 40%, #120a2e 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 30%, rgba(0,229,255,0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 80% 70%, rgba(168,85,247,0.09) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-grid {
+      background-image:
+        linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      position: absolute; inset: 0;
+      pointer-events: none;
+    }
+    .glow-text {
+      text-shadow: 0 0 30px rgba(0,229,255,0.4), 0 0 60px rgba(0,229,255,0.15);
+    }
+    .glow-purple {
+      text-shadow: 0 0 20px rgba(168,85,247,0.5);
+    }
+
+    /* ── NAV ── */
+    .nav-pill {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+    }
+    .nav-pill a {
+      transition: color 0.2s, background 0.2s;
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+    .nav-pill a:hover { background: rgba(0,229,255,0.1); color: #00e5ff; }
+
+    /* ── TABS ── */
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: #94a3b8;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { border-color: #4b5563; color: #e2e8f0; }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(168,85,247,0.15));
+      border-color: var(--neon);
+      color: var(--neon);
+      box-shadow: 0 0 16px rgba(0,229,255,0.15);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── CARDS ── */
+    .model-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .model-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--neon), var(--neon2));
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .model-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,229,255,0.1); border-color: #2d2d5e; }
+    .model-card:hover::before { opacity: 1; }
+
+    .tip-card {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      border-left: 3px solid var(--neon);
+      transition: transform 0.2s;
+    }
+    .tip-card:hover { transform: translateX(4px); }
+
+    /* ── BADGES ── */
+    .badge {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
+      padding: 2px 8px; border-radius: 20px; display: inline-block;
+    }
+    .badge-blue   { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .badge-cyan   { background: rgba(0,229,255,0.1);   color: #00e5ff; border: 1px solid rgba(0,229,255,0.25); }
+    .badge-purple { background: rgba(168,85,247,0.12); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
+    .badge-green  { background: rgba(34,197,94,0.1);   color: #4ade80; border: 1px solid rgba(34,197,94,0.25); }
+    .badge-orange { background: rgba(249,115,22,0.12); color: #fb923c; border: 1px solid rgba(249,115,22,0.3); }
+    .badge-red    { background: rgba(239,68,68,0.1);   color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+    .badge-yellow { background: rgba(234,179,8,0.12);  color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
+
+    /* ── VRAM METER ── */
+    .vram-bar-wrap { height: 6px; background: #1e1e3f; border-radius: 99px; overflow: hidden; }
+    .vram-bar { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+
+    /* ── GPU TABLE ── */
+    .gpu-table th { background: rgba(0,229,255,0.06); color: #94a3b8; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    .gpu-table tr:hover td { background: rgba(255,255,255,0.025); }
+    .gpu-table td, .gpu-table th { padding: 10px 14px; border-bottom: 1px solid #1e1e3f; }
+
+    /* ── CODE ── */
+    .code-block {
+      background: #050510;
+      border: 1px solid #1e1e3f;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: #7dd3fc;
+      padding: 12px 16px;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+    .code-block .comment { color: #4b5563; }
+    .code-block .flag { color: #a78bfa; }
+    .code-block .val { color: #34d399; }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-size: 1.5rem; font-weight: 800;
+      background: linear-gradient(90deg, var(--neon), var(--neon2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── PROGRESS (VRAM) ── */
+    @keyframes fillBar { from { width: 0; } }
+
+    /* ── TOOLTIP ── */
+    .tooltip-wrap { position: relative; display: inline-block; }
+    .tooltip-wrap .tt {
+      visibility: hidden; opacity: 0; transition: opacity 0.2s;
+      position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+      background: #1e1e3f; color: #e2e8f0; font-size: 0.75rem;
+      padding: 6px 10px; border-radius: 6px; white-space: nowrap;
+      border: 1px solid #2d2d5e; z-index: 10;
+    }
+    .tooltip-wrap:hover .tt { visibility: visible; opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ NAV ════════════════════════════════════════ -->
+<nav class="nav-pill sticky top-0 z-50 flex items-center justify-between px-6 py-3 mx-4 mt-3 rounded-xl">
+  <div class="flex items-center gap-2">
+    <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="url(#ng)"/>
+      <path d="M8 22 L16 10 L24 22" stroke="#00e5ff" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="16" cy="10" r="2.5" fill="#a855f7"/>
+      <defs><linearGradient id="ng" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#0d0d2e"/><stop offset="1" stop-color="#1a0a3e"/></linearGradient></defs>
+    </svg>
+    <span class="font-bold text-sm text-white">ComfyUI <span style="color:#00e5ff">Guide</span></span>
+  </div>
+  <div class="hidden md:flex gap-1 text-sm">
+    <a href="#models-img" onclick="switchTab('images');return false;">🖼 Images</a>
+    <a href="#models-vid" onclick="switchTab('videos');return false;">🎬 Vidéos</a>
+    <a href="#components" onclick="switchTab('components');return false;">🧩 Composants</a>
+    <a href="#gpu-table" onclick="switchTab('gpu');return false;">⚡ GPU</a>
+    <a href="#tips" onclick="switchTab('tips');return false;">💡 Astuces</a>
+    <a href="#nodes-speed" onclick="switchTab('nodes');return false;">⚙️ Nodes</a>
+  </div>
+  <a href="https://github.com/comfyanonymous/ComfyUI" target="_blank"
+     class="text-xs bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-white/10 transition">
+    ⭐ GitHub
+  </a>
+</nav>
+
+<!-- ════════════════════════════════════════ HERO ════════════════════════════════════════ -->
+<header class="hero-bg py-20 px-4 text-center relative">
+  <div class="hero-grid"></div>
+  <div class="relative z-10">
+    <div class="inline-flex items-center gap-2 badge badge-cyan mb-5 text-sm py-1.5 px-4">
+      <span class="animate-pulse">●</span> Mis à jour — 2025 / 2026
+    </div>
+    <h1 class="text-4xl md:text-6xl font-black mb-4 glow-text" style="color:#00e5ff">
+      ComfyUI
+    </h1>
+    <p class="text-2xl md:text-3xl font-bold mb-3 text-white">
+      Modèles <span class="glow-purple" style="color:#c084fc">2025 / 2026</span>
+    </p>
+    <p class="text-base md:text-lg text-slate-400 max-w-2xl mx-auto mb-8">
+      Guide complet des modèles image &amp; vidéo, composants (VAE · CLIP · UNet · Text Encoders · Upscale),
+      compatibilité GPU NVIDIA <strong class="text-white">RTX 3060 → RTX 5090</strong> et astuces d'optimisation.
+    </p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <span class="badge badge-green py-1.5 px-4">✅ FLUX.1 Dev/Schnell</span>
+      <span class="badge badge-purple py-1.5 px-4">✅ Wan 2.1 / 2.2</span>
+      <span class="badge badge-blue py-1.5 px-4">✅ HunyuanVideo</span>
+      <span class="badge badge-orange py-1.5 px-4">✅ SD 3.5</span>
+      <span class="badge badge-yellow py-1.5 px-4">✅ LTX-Video 2 / 2.3</span>
+      <span class="badge badge-cyan py-1.5 px-4">✅ Z-Image Turbo</span>
+      <span class="badge badge-green py-1.5 px-4">✅ Chroma</span>
+      <span class="badge badge-purple py-1.5 px-4">✅ FLUX.2 Klein</span>
+      <span class="badge badge-red py-1.5 px-4">✅ Ideogram 4.0</span>
+      <span class="badge badge-yellow py-1.5 px-4">✅ Qwen-Image</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════ MAIN ════════════════════════════════════════ -->
+<main class="max-w-7xl mx-auto px-4 py-10 space-y-20">
+
+  <!-- ─── TABS ─── -->
+  <div class="flex flex-wrap gap-2 justify-center sticky top-16 z-40 py-3" style="background:rgba(10,10,18,0.85);backdrop-filter:blur(10px);">
+    <button class="tab-btn active" onclick="switchTab('images')">🖼 Modèles Image</button>
+    <button class="tab-btn" onclick="switchTab('videos')">🎬 Modèles Vidéo</button>
+    <button class="tab-btn" onclick="switchTab('components')">🧩 Composants</button>
+    <button class="tab-btn" onclick="switchTab('gpu')">⚡ GPU Guide</button>
+    <button class="tab-btn" onclick="switchTab('tips')">💡 Optimisation</button>
+    <button class="tab-btn" onclick="switchTab('nodes')">⚙️ Nodes Speed</button>
+  </div>
+
+  <!-- ═══════════════════ TAB : IMAGES ═══════════════════ -->
+  <section id="models-img" class="tab-panel active reveal">
+    <h2 class="section-title mb-2">🖼 Modèles Image — 2025 / 2026</h2>
+    <p class="text-slate-400 text-sm mb-8">Les meilleurs modèles de génération d'images compatibles ComfyUI, classés par famille.</p>
+
+    <!-- FLUX -->
+    <h3 class="text-lg font-bold text-cyan-400 mb-4 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span> FLUX (Black Forest Labs)
+    </h3>
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Dev</h4>
+            <p class="text-xs text-slate-400 mt-1">Modèle de référence 2025 — haute fidélité prompt</p>
+          </div>
+          <span class="badge badge-cyan">FLUX</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-cyan-400">12 GB (fp8) / 24 GB (fp16)</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:75%;background:linear-gradient(90deg,#00e5ff,#a855f7)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">Format</span><span>safetensors / GGUF</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Résolution</span><span>512→2048px</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>20–30 (Euler)</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-green">⭐ Best Quality</span>
+          <span class="badge badge-orange">Non-commercial</span>
+        </div>
+        <a href="https://huggingface.co/black-forest-labs/FLUX.1-dev" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Schnell</h4>
+            <p class="text-xs text-slate-400 mt-1">Version distillée ultra-rapide — 4 steps</p>
+          </div>
+          <span class="badge badge-cyan">FLUX</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-green-400">8 GB (fp8)</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:40%;background:linear-gradient(90deg,#4ade80,#22d3ee)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>4 steps</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Licence</span><span>Apache 2.0 ✅</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Vitesse</span><span class="text-green-400">×3 plus rapide que Dev</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-green">Open Source</span>
+          <span class="badge badge-blue">RTX 3060 OK</span>
+        </div>
+        <a href="https://huggingface.co/black-forest-labs/FLUX.1-schnell" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Dev FP8</h4>
+            <p class="text-xs text-slate-400 mt-1">Version quantifiée pour VRAM limité</p>
+          </div>
+          <span class="badge badge-yellow">FP8</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-yellow-400">8–10 GB</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:50%;background:linear-gradient(90deg,#facc15,#fb923c)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">Taille</span><span>~8.1 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Qualité vs fp16</span><span class="text-yellow-400">~95% identique</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-blue">RTX 3060 12GB ✓</span>
+          <span class="badge badge-yellow">Recommandé budget</span>
+        </div>
+        <a href="https://huggingface.co/Comfy-Org/flux1-dev" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Dev GGUF</h4>
+            <p class="text-xs text-slate-400 mt-1">Q4/Q5/Q6/Q8 — ultra faible VRAM</p>
+          </div>
+          <span class="badge badge-purple">GGUF</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Q4 VRAM</span><span class="font-mono text-purple-400">6 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Q8 VRAM</span><span class="font-mono text-purple-400">10 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Plugin requis</span><span>ComfyUI-GGUF</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-red">RTX 3060 6GB ✓</span>
+          <span class="badge badge-purple">Nunchaku compatible</span>
+        </div>
+        <a href="https://huggingface.co/city96/FLUX.1-dev-gguf" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (city96)</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Redux</h4>
+            <p class="text-xs text-slate-400 mt-1">Image-to-image & style transfer avancé</p>
+          </div>
+          <span class="badge badge-cyan">FLUX</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Usage</span><span>img2img / Style</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono">12 GB</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-blue">Img2Img</span>
+          <span class="badge badge-cyan">ControlNet ready</span>
+        </div>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX Hyper LoRA</h4>
+            <p class="text-xs text-slate-400 mt-1">Accélérateur — 8 steps haute qualité</p>
+          </div>
+          <span class="badge badge-green">LoRA</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span class="text-green-400">8 steps</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Poids</span><span>0.125–0.2</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Compatible</span><span>FLUX Dev / FP8</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-green">Vitesse ×2–3</span>
+          <span class="badge badge-yellow">Qualité préservée</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SDXL & SD -->
+    <h3 class="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span> Stable Diffusion — SDXL / SD 3.5
+    </h3>
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Stable Diffusion 3.5 Large</h4>
+            <p class="text-xs text-slate-400 mt-1">Architecture MMDiT — 8B paramètres</p>
+          </div>
+          <span class="badge badge-purple">SD 3.5</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-purple-400">12 GB (fp8) / 24 GB (fp16)</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:70%;background:linear-gradient(90deg,#a855f7,#ec4899)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">Text Encoders</span><span>CLIP-L + CLIP-G + T5-XXL</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>20–30 (DPM++ 2M)</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-purple">Triple Encodeur</span>
+          <span class="badge badge-green">Stabilité AI</span>
+        </div>
+        <a href="https://huggingface.co/stabilityai/stable-diffusion-3.5-large" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">SD 3.5 Large Turbo</h4>
+            <p class="text-xs text-slate-400 mt-1">Version distillée — 4 steps</p>
+          </div>
+          <span class="badge badge-purple">SD 3.5</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-yellow-400">10 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span class="text-green-400">4–8 steps</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">CFG</span><span>1.0</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-yellow">Rapide</span>
+          <span class="badge badge-blue">RTX 3060 12GB ✓</span>
+        </div>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">SDXL 1.0 + Refiner</h4>
+            <p class="text-xs text-slate-400 mt-1">Base + Refiner pour détails haute résolution</p>
+          </div>
+          <span class="badge badge-blue">SDXL</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono text-cyan-400">8 GB</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:40%;background:linear-gradient(90deg,#3b82f6,#06b6d4)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">Résolution native</span><span>1024×1024</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Text Encoders</span><span>CLIP-L + CLIP-G</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-green">Stable</span>
+          <span class="badge badge-blue">RTX 3060 ✓</span>
+          <span class="badge badge-yellow">Éco VRAM</span>
+        </div>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Juggernaut XL v9/v10</h4>
+            <p class="text-xs text-slate-400 mt-1">Meilleur SDXL pour photoréalisme</p>
+          </div>
+          <span class="badge badge-blue">SDXL Fine-tune</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono">8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Style</span><span>Photoréaliste</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>30–40 DPM++</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-cyan">CivitAI Top</span>
+          <span class="badge badge-green">Portrait / Lifestyle</span>
+        </div>
+        <a href="https://civitai.com/models/133005" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ CivitAI</a>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Pony Diffusion XL v6</h4>
+            <p class="text-xs text-slate-400 mt-1">Spécialisé illustration / style anime</p>
+          </div>
+          <span class="badge badge-blue">SDXL Fine-tune</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono">8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Style</span><span>Anime / Illustratif</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-purple">Anime</span>
+          <span class="badge badge-blue">RTX 3060 ✓</span>
+        </div>
+      </div>
+
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">SDXL-Lightning</h4>
+            <p class="text-xs text-slate-400 mt-1">ByteDance — distillation adversariale 4 steps</p>
+          </div>
+          <span class="badge badge-yellow">SDXL Fast</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono">8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span class="text-green-400">4 steps</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">CFG</span><span>~1.5–2.0</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-green">Apache 2.0</span>
+          <span class="badge badge-yellow">Très rapide</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nouveaux modèles 2025/2026 -->
+    <h3 class="text-lg font-bold text-orange-400 mb-4 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-orange-400 inline-block animate-pulse"></span> Nouveaux 2025 / 2026 — À connaître absolument
+    </h3>
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      <!-- Z-Image Turbo -->
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Z-Image Turbo</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba Tongyi — 6B params, photoréalisme en 8 steps</p>
+          </div>
+          <span class="badge badge-orange">Nov 2025</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Paramètres</span><span class="font-mono text-cyan-400">6B (S3-DiT)</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:55%;background:linear-gradient(90deg,#f97316,#facc15)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM BF16</span><span class="font-mono text-yellow-400">16 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP8</span><span class="font-mono text-green-400">10 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM GGUF</span><span class="font-mono text-green-400">6–8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span class="text-green-400">8 steps</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Vitesse</span><span class="text-cyan-400">2.3 sec / RTX 4090</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Text Encoder</span><span>Qwen 3 4B</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VAE</span><span>ae.safetensors (FLUX)</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Fichiers (mode split)</span><br>
+          diffusion_models/z_image_turbo_bf16.safetensors<br>
+          text_encoders/qwen_3_4b.safetensors<br>
+          vae/ae.safetensors<br>
+          <span class="comment"># Mode AIO (tout-en-un)</span><br>
+          checkpoints/z-image-turbo-fp8-aio.safetensors
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-orange">⭐ Photoréalisme 2025</span>
+          <span class="badge badge-green">RTX 3060 12GB (FP8) ✓</span>
+          <span class="badge badge-purple">GGUF Q2→Q8 dispo</span>
+        </div>
+        <a href="https://huggingface.co/Comfy-Org/Z-Image-Turbo" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (Comfy-Org)</a>
+      </div>
+
+      <!-- Chroma -->
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Chroma / Chroma1-HD</h4>
+            <p class="text-xs text-slate-400 mt-1">Lodestone Rock — 8.9B, basé sur FLUX Schnell, Apache 2.0</p>
+          </div>
+          <span class="badge badge-green">2025 Open</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Paramètres</span><span class="font-mono text-green-400">8.9B</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:50%;background:linear-gradient(90deg,#4ade80,#22d3ee)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP16</span><span class="font-mono text-yellow-400">~18 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP8-scaled</span><span class="font-mono text-green-400">~11 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM GGUF Q4</span><span class="font-mono text-green-400">6–8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>20–30 (Euler/UniPC)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">CFG</span><span class="text-cyan-400">3.0–5.0</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Licence</span><span class="text-green-400">Apache 2.0 ✅</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Négatif prompt</span><span class="text-green-400">✅ Supporté</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Censuré</span><span class="text-red-400">Non (pas de filtre)</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Dossier : models/unet/ ou diffusion_models/</span><br>
+          Chroma.safetensors (fp16 ~ 18 GB)<br>
+          <span class="comment"># GGUF (dossier : diffusion_models/)</span><br>
+          Chroma-v35-Q6_K.gguf (~7 GB)<br>
+          <span class="comment"># Text encoder : T5-XXL seulement !</span><br>
+          text_encoders/t5xxl_fp8_e4m3fn.safetensors<br>
+          <span class="comment"># Loader : "Load Chroma Diffusion Model"</span><br>
+          <span class="comment"># Plugin : ComfyUI_FluxMod (lodestone-rock)</span>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-green">⭐ Art / Illustration</span>
+          <span class="badge badge-blue">RTX 3060 12GB (GGUF) ✓</span>
+          <span class="badge badge-cyan">Finetuning idéal</span>
+          <span class="badge badge-purple">T5 uniquement</span>
+        </div>
+        <a href="https://huggingface.co/lodestones/Chroma" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (lodestones/Chroma)</a>
+        <a href="https://huggingface.co/silveroxides/Chroma-GGUF" target="_blank" class="text-xs text-cyan-400 hover:underline block">→ GGUF : silveroxides/Chroma-GGUF</a>
+      </div>
+
+      <!-- FLUX.2 Klein -->
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.2 Klein 4B / 9B</h4>
+            <p class="text-xs text-slate-400 mt-1">Black Forest Labs — janvier 2026, distillé 4 steps ultra-rapide</p>
+          </div>
+          <span class="badge badge-purple">Jan 2026</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="bg-[#0a0a1a] rounded p-2 border border-[#1e1e3f]">
+              <div class="text-white font-bold mb-1">4B Distillé</div>
+              <div class="flex justify-between"><span class="text-slate-500">VRAM</span><span class="text-green-400">8 GB</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Steps</span><span class="text-green-400">4 !</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Licence</span><span class="text-green-400">Apache 2.0</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Vitesse</span><span class="text-cyan-400">&lt; 1 sec !</span></div>
+            </div>
+            <div class="bg-[#0a0a1a] rounded p-2 border border-[#1e1e3f]">
+              <div class="text-white font-bold mb-1">9B</div>
+              <div class="flex justify-between"><span class="text-slate-500">VRAM</span><span class="text-red-400">20–29 GB</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>4–8</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Licence</span><span class="text-orange-400">Non-comm.</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">Qualité</span><span class="text-cyan-400">≈ 5× plus gros</span></div>
+            </div>
+          </div>
+          <div class="flex justify-between"><span class="text-slate-500">Text Encoder</span><span>Qwen3 8B</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">GGUF 9B</span><span class="text-green-400">Q4 = 12 GB VRAM</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Dossier : diffusion_models/</span><br>
+          flux-2-klein-4b.safetensors <span class="comment">(distillé, 8 GB)</span><br>
+          flux-2-klein-9b.safetensors <span class="comment">(qualité max)</span><br>
+          <span class="comment"># GGUF 9B (city96) → dossier unet/</span><br>
+          flux-2-klein-9b-Q4_K_M.gguf <span class="comment">(~12 GB)</span>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-purple">⭐ Ultra-rapide 2026</span>
+          <span class="badge badge-green">RTX 3060 6GB (4B) ✓</span>
+          <span class="badge badge-blue">Commercial Apache 2.0</span>
+          <span class="badge badge-cyan">Multi-référence img</span>
+        </div>
+        <a href="https://huggingface.co/black-forest-labs/FLUX.2-Klein" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (BFL)</a>
+      </div>
+
+      <!-- Ideogram 4.0 -->
+      <div class="model-card p-5" style="border-top:2px solid #ec4899">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Ideogram 4.0</h4>
+            <p class="text-xs text-slate-400 mt-1">Ideogram AI — 9.3B DiT, meilleur rendu typographique open-weight</p>
+          </div>
+          <span class="badge badge-red">Juin 2026 🔥</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Paramètres</span><span class="font-mono text-pink-400">9.3B (DiT 34 layers)</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:55%;background:linear-gradient(90deg,#ec4899,#f97316)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP8</span><span class="font-mono text-yellow-400">16 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM NVFP4</span><span class="font-mono text-green-400">8–12 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM NF4</span><span class="font-mono text-green-400">~24 GB (1 seul GPU)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Résolution</span><span>256–2048px (×16) | 6:1 max</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>12 (turbo) / 48 (qualité)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Text Encoder</span><span class="text-yellow-400">Qwen3-VL-8B (13 couches)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VAE</span><span>flux2-vae.safetensors</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Prompt</span><span class="text-pink-400">JSON structuré (natif) + texte</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Rendu texte</span><span class="text-green-400">⭐ #1 open-weight monde</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Licence</span><span class="text-orange-400">Non-commercial</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Fichiers requis (Comfy-Org/Ideogram-4) :</span><br>
+          diffusion_models/ideogram4_fp8_scaled.safetensors<br>
+          diffusion_models/ideogram4_unconditional_fp8_scaled.safetensors<br>
+          <span class="comment"># Variante NVFP4 (RTX 50xx) :</span><br>
+          diffusion_models/ideogram4_nvfp4_mixed.safetensors<br>
+          diffusion_models/ideogram4_unconditional_nvfp4_mixed.safetensors<br>
+          text_encoders/qwen3vl_8b_fp8_scaled.safetensors<br>
+          vae/flux2-vae.safetensors<br>
+          <span class="comment"># ComfyUI natif : support day-0 (juin 2026)</span>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-pink-900/40 mb-3">
+          <div class="text-xs font-bold text-pink-400 mb-2">🎨 Forces uniques d'Ideogram 4.0 :</div>
+          <div class="grid grid-cols-2 gap-1 text-xs text-slate-300">
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>Typographie #1 open-weight</span></div>
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>JSON prompting (bounding-box)</span></div>
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>Couleurs hex précises</span></div>
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>Logos / Affiches / Packagings</span></div>
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>Ratio jusqu'à 6:1 (bannières)</span></div>
+            <div class="flex items-center gap-1"><span class="text-green-400">✅</span><span>Surpasse FLUX.2 Dev (32B !)</span></div>
+          </div>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-[#1e1e3f] mb-3">
+          <table class="gpu-table w-full text-xs">
+            <thead><tr><th class="text-left">GPU</th><th>Format</th><th>Temps 48 steps</th></tr></thead>
+            <tbody>
+              <tr><td class="text-green-400">RTX 5090 (32 GB)</td><td class="text-center">NVFP4</td><td class="text-center text-green-400">Très rapide</td></tr>
+              <tr><td class="text-cyan-400">RTX 4090/5080 (24 GB)</td><td class="text-center">FP8 / NF4</td><td class="text-center text-green-400">&lt; 5 min</td></tr>
+              <tr><td class="text-yellow-400">RTX 4080/3090 (16–24 GB)</td><td class="text-center">FP8</td><td class="text-center text-yellow-400">~5 min</td></tr>
+              <tr><td class="text-orange-400">RTX 3070 Ti / 4070 (8 GB)</td><td class="text-center">NVFP4</td><td class="text-center text-orange-400">Lent / partagé RAM</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-red">⭐ Best Typo / Design 2026</span>
+          <span class="badge badge-yellow">RTX 4080+ recommandé</span>
+          <span class="badge badge-cyan">ComfyUI natif</span>
+          <span class="badge badge-purple">JSON Prompting</span>
+        </div>
+        <a href="https://huggingface.co/Comfy-Org/Ideogram-4" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace : Comfy-Org/Ideogram-4</a>
+        <a href="https://huggingface.co/ideogram-ai/ideogram-4-fp8" target="_blank" class="text-xs text-cyan-400 hover:underline block">→ HuggingFace : ideogram-ai/ideogram-4-fp8</a>
+        <a href="https://github.com/ideogram-oss/ideogram4" target="_blank" class="text-xs text-cyan-400 hover:underline block">→ GitHub officiel : ideogram-oss/ideogram4</a>
+      </div>
+
+      <!-- FLUX.1 Kontext -->
+      <div class="model-card p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">FLUX.1 Kontext</h4>
+            <p class="text-xs text-slate-400 mt-1">BFL — édition contextuelle in-painting avancée</p>
+          </div>
+          <span class="badge badge-orange">2025 New</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">VRAM min.</span><span class="font-mono">12 GB (fp8)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Usage</span><span>Editing contextuel guidé</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Modes</span><span>Dev + Pro (API)</span></div>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-3">
+          <span class="badge badge-orange">Image Editing</span>
+          <span class="badge badge-cyan">Context-aware</span>
+          <span class="badge badge-blue">Inpainting avancé</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ══ QWEN MODELS ══ -->
+    <h3 class="text-lg font-bold text-amber-400 mb-4 mt-10 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+      🤖 Modèles Qwen (Alibaba) — Image & Vision 2025/2026
+    </h3>
+    <div class="bg-[#0a0a14] border border-amber-400/20 rounded-xl p-4 mb-6 text-xs text-slate-400">
+      <span class="text-amber-400 font-bold">ℹ️ Famille Qwen dans ComfyUI :</span> Alibaba propose plusieurs modèles Qwen utilisables dans ComfyUI — soit comme <strong class="text-white">modèle de génération d'images</strong> (Qwen-Image-2512), soit comme <strong class="text-white">text encoder / LLM de prompt</strong> (Qwen2.5-VL, Qwen3-VL), soit comme <strong class="text-white">modèle de vision</strong> pour analyser des images.
+    </div>
+    <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+
+      <!-- Qwen-Image-2512 -->
+      <div class="model-card p-5" style="border-top:2px solid #f59e0b">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Qwen-Image-2512</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba — modèle T2I basé sur Qwen2.5-VL + MMDiT</p>
+          </div>
+          <span class="badge badge-yellow">Déc 2025</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Architecture</span><span class="font-mono text-amber-400">MMDiT + Qwen2.5-VL</span></div>
+          <div class="vram-bar-wrap mt-1"><div class="vram-bar" style="width:60%;background:linear-gradient(90deg,#f59e0b,#f97316)"></div></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM BF16</span><span class="font-mono text-red-400">~40 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP8</span><span class="font-mono text-yellow-400">16–24 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">GGUF Q4_K_M</span><span class="font-mono text-green-400">~13 GB VRAM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">GGUF Q3_K_S</span><span class="font-mono text-green-400">~9 GB VRAM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">GGUF Q2_K</span><span class="font-mono text-green-400">~7 GB VRAM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Résolution max</span><span>1328×1328 (2048 possible)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Steps</span><span>20–30 (CFG 3.5–5.0)</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Rendu texte</span><span class="text-green-400">Excellent ✅</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Fichiers requis :</span><br>
+          diffusion_models/qwen_image_2512_fp8_e4m3fn.safetensors<br>
+          <span class="comment"># ou GGUF :</span><br>
+          unet/qwen-image-2512-Q4_K_M.gguf (~13 GB)<br>
+          text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors<br>
+          vae/qwen_image_vae.safetensors<br>
+          <span class="comment"># LoRA Lightning (4 steps) :</span><br>
+          loras/Qwen-Image-Lightning-4steps-V1.0.safetensors<br>
+          <span class="comment"># Plugin GGUF : ComfyUI-GGUF (city96)</span>
+        </div>
+        <div class="overflow-x-auto rounded-lg border border-[#1e1e3f] mb-3">
+          <table class="gpu-table w-full text-xs">
+            <thead><tr><th class="text-left">GPU</th><th>QUANT</th><th>Temps 1024px</th></tr></thead>
+            <tbody>
+              <tr><td class="text-cyan-400">RTX 4090 (24 GB)</td><td class="text-center">FP8</td><td class="text-center text-green-400">~45 sec</td></tr>
+              <tr><td class="text-yellow-400">RTX 3080 10 GB</td><td class="text-center">Q4_K_M</td><td class="text-center text-yellow-400">~5 min</td></tr>
+              <tr><td class="text-yellow-400">RTX 4060 8 GB</td><td class="text-center">Q4_K_M</td><td class="text-center text-yellow-400">~5 min</td></tr>
+              <tr><td class="text-orange-400">RTX 3070 Ti 8 GB</td><td class="text-center">Q3–Q4</td><td class="text-center text-orange-400">~6–10 min</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-yellow">⭐ Meilleur rendu texte</span>
+          <span class="badge badge-green">RTX 3060 12GB (Q3) ✓</span>
+          <span class="badge badge-amber">GGUF Q2–Q8 dispo</span>
+        </div>
+        <a href="https://huggingface.co/Qwen/Qwen-Image-2512" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (Qwen/Qwen-Image-2512)</a>
+        <a href="https://huggingface.co/unsloth/Qwen-Image-2512-GGUF" target="_blank" class="text-xs text-cyan-400 hover:underline block">→ GGUF : unsloth/Qwen-Image-2512-GGUF</a>
+      </div>
+
+      <!-- Qwen-Image-Edit -->
+      <div class="model-card p-5" style="border-top:2px solid #f59e0b">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Qwen-Image-Edit-2511</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba — édition image guidée par texte + multimodal</p>
+          </div>
+          <span class="badge badge-yellow">Nov 2025</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Usage</span><span class="text-amber-400">Inpainting / Editing</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM FP8</span><span class="font-mono text-yellow-400">16–24 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">GGUF Q4</span><span class="font-mono text-green-400">12–14 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">INT4 (Nunchaku)</span><span class="font-mono text-cyan-400">~8 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Compatibilité</span><span>Même VAE + TE que 2512</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Résolution</span><span>Jusqu'à 2048px</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Même dossiers que Qwen-Image-2512</span><br>
+          diffusion_models/qwen_image_edit_2511_fp8.safetensors<br>
+          <span class="comment"># ou Nunchaku INT4 :</span><br>
+          <span class="comment"># mit-han-lab / svdq-int4-qwen-image-edit</span><br>
+          <span class="comment"># VAE + TE = identiques à 2512</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-yellow">Editing multimodal</span>
+          <span class="badge badge-cyan">Nunchaku INT4 dispo</span>
+          <span class="badge badge-blue">Inpainting avancé</span>
+        </div>
+        <a href="https://huggingface.co/Qwen/Qwen-Image-Edit-2511" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <!-- Qwen2.5-VL / Qwen3-VL comme Text Encoder -->
+      <div class="model-card p-5" style="border-top:2px solid #f59e0b">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Qwen2.5-VL / Qwen3-VL</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba — Text encoder vision + générateur de prompts</p>
+          </div>
+          <span class="badge badge-yellow">Encoder / VLM</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Rôle ComfyUI</span><span class="text-amber-400">Text Encoder + Prompt LLM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Modèles</span><span>3B / 7B / 72B</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM 7B FP16</span><span class="font-mono text-yellow-400">~14 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">VRAM 7B GGUF Q4</span><span class="font-mono text-green-400">~5 GB</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Usages</span><span>TE pour Qwen-Image, prompt expansion</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Vision</span><span class="text-green-400">Analyse image/vidéo ✅</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Fichier text encoder pour Qwen-Image :</span><br>
+          text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors<br>
+          <span class="comment"># Plugin LLM / VLM pour prompts :</span><br>
+          <span class="comment"># ComfyUI-QwenVL (1038lab)</span><br>
+          <span class="comment"># Qwen3-VL 4B : ~3 GB VRAM (FP16)</span><br>
+          models/text_encoders/Qwen3-VL-4B-Instruct/
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-yellow">⭐ Meilleur prompt LLM</span>
+          <span class="badge badge-green">RTX 3070 Ti ✓ (7B GGUF)</span>
+          <span class="badge badge-blue">Analyse image/vidéo</span>
+          <span class="badge badge-purple">GGUF Q4 = 5 GB</span>
+        </div>
+        <a href="https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (Qwen2.5-VL-7B)</a>
+        <a href="https://github.com/1038lab/ComfyUI-QwenVL" target="_blank" class="text-xs text-cyan-400 hover:underline block">→ Plugin : ComfyUI-QwenVL</a>
+      </div>
+
+      <!-- Qwen3 LLM Prompt Helper -->
+      <div class="model-card p-5" style="border-top:2px solid #f59e0b">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h4 class="font-bold text-white text-base">Qwen3 (LLM) — Prompt Helper</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba — LLM texte pur pour enrichir les prompts</p>
+          </div>
+          <span class="badge badge-yellow">LLM / Prompt</span>
+        </div>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex justify-between"><span class="text-slate-500">Modèles</span><span>0.6B / 1.7B / 4B / 8B / 14B / 32B</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Qwen3 4B GGUF</span><span class="font-mono text-green-400">~2.5 GB VRAM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Qwen3 8B GGUF</span><span class="font-mono text-green-400">~5 GB VRAM</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Usage ComfyUI</span><span>Expansion / traduction prompts</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">Particularité</span><span class="text-amber-400">Thinking mode (raisonnement)</span></div>
+        </div>
+        <div class="code-block text-xs my-3">
+          <span class="comment"># Via plugin ComfyUI-QwenVL (1038lab)</span><br>
+          <span class="comment"># Ou Searge LLM nodes</span><br>
+          <span class="comment"># Qwen3 4B = idéal RTX 3070 Ti</span><br>
+          <span class="comment"># Charge en text_encoders/ ou séparé</span><br>
+          models/text_encoders/Qwen3-4B-Instruct/<br>
+          <span class="comment"># GGUF (Ollama compatible aussi)</span>
+        </div>
+        <div class="flex flex-wrap gap-1 mt-2">
+          <span class="badge badge-yellow">Prompt expansion</span>
+          <span class="badge badge-green">RTX 3070 Ti ✓</span>
+          <span class="badge badge-purple">Thinking mode</span>
+          <span class="badge badge-cyan">Léger 2.5 GB</span>
+        </div>
+        <a href="https://huggingface.co/Qwen/Qwen3-4B" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (Qwen3-4B)</a>
+      </div>
+
+    </div>
+
+    <!-- Qwen dans ComfyUI — Guide d'usage -->
+    <div class="model-card p-6 mt-6">
+      <h3 class="font-bold text-amber-400 text-base mb-4 flex items-center gap-2">
+        <span>🗺️</span> Guide d'utilisation Qwen dans ComfyUI
+      </h3>
+      <div class="grid md:grid-cols-3 gap-4 text-xs">
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="font-bold text-white mb-2">🖼 Génération image (T2I)</div>
+          <ul class="text-slate-400 space-y-1">
+            <li>→ Modèle : <span class="text-amber-400">Qwen-Image-2512</span></li>
+            <li>→ Node : <span class="text-cyan-400">Load Diffusion Model</span></li>
+            <li>→ TE : <span class="text-cyan-400">qwen_2.5_vl_7b_fp8_scaled</span></li>
+            <li>→ VAE : <span class="text-cyan-400">qwen_image_vae.safetensors</span></li>
+            <li>→ CFG : 3.5–5.0 | Steps : 20–30</li>
+            <li>→ Résolution : 1024–1328px</li>
+            <li>→ LoRA Lightning = 4 steps</li>
+          </ul>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="font-bold text-white mb-2">✏️ Édition image</div>
+          <ul class="text-slate-400 space-y-1">
+            <li>→ Modèle : <span class="text-amber-400">Qwen-Image-Edit-2511</span></li>
+            <li>→ Nunchaku INT4 disponible</li>
+            <li>→ Même VAE + TE que 2512</li>
+            <li>→ Fonctionne en inpainting</li>
+            <li>→ Guidage textuel précis</li>
+            <li>→ Préférer FP8 ou INT4</li>
+          </ul>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="font-bold text-white mb-2">💬 Améliorer ses prompts</div>
+          <ul class="text-slate-400 space-y-1">
+            <li>→ Modèle : <span class="text-amber-400">Qwen3-VL 4B ou 7B</span></li>
+            <li>→ Plugin : <span class="text-cyan-400">ComfyUI-QwenVL</span></li>
+            <li>→ Entrée : prompt court</li>
+            <li>→ Sortie : prompt enrichi détaillé</li>
+            <li>→ Peut analyser une image source</li>
+            <li>→ Fonctionne avec tous les modèles</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════ TAB : VIDÉOS ═══════════════════ -->
+  <section id="models-vid" class="tab-panel reveal">
+    <h2 class="section-title mb-2">🎬 Modèles Vidéo — 2025 / 2026</h2>
+    <p class="text-slate-400 text-sm mb-8">Génération vidéo Text-to-Video et Image-to-Video. La VRAM est le facteur limitant principal.</p>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+      <!-- Wan 2.x -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">Wan 2.1 / 2.2</h4>
+            <p class="text-xs text-slate-400 mt-1">Alibaba — meilleur rapport qualité/ressources 2025</p>
+          </div>
+          <span class="badge badge-cyan">Wan 2.x</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span>1.3B et 14B</div>
+          <div><span class="text-slate-500 block">Résolution</span>720p (14B)</div>
+          <div><span class="text-slate-500 block">VRAM 1.3B</span><span class="text-green-400">8–12 GB</span></div>
+          <div><span class="text-slate-500 block">VRAM 14B</span><span class="text-yellow-400">16–24 GB</span></div>
+          <div><span class="text-slate-500 block">Modes</span>T2V + I2V + Inpaint</div>
+          <div><span class="text-slate-500 block">FPS</span>16–24 fps</div>
+          <div><span class="text-slate-500 block">Durée max</span>5–10 sec</div>
+          <div><span class="text-slate-500 block">Wan 2.2 1080p</span><span class="text-cyan-400">~28s / RTX 5090</span></div>
+        </div>
+        <div class="code-block mb-3">
+          <span class="comment"># Dossiers ComfyUI :</span><br>
+          models/diffusion_models/wan2_1_t2v_1.3B_bf16.safetensors<br>
+          models/text_encoders/umt5-xxl-enc-bf16.safetensors<br>
+          models/vae/wan_2.1_vae.safetensors<br>
+          models/clip_vision/clip_vision_h.safetensors
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-green">⭐ Recommandé 2025</span>
+          <span class="badge badge-blue">RTX 3060 (1.3B) ✓</span>
+          <span class="badge badge-yellow">RTX 4080+ (14B)</span>
+        </div>
+        <a href="https://huggingface.co/Wan-AI/Wan2.1-T2V-1.3B" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <!-- HunyuanVideo -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">HunyuanVideo 1.x</h4>
+            <p class="text-xs text-slate-400 mt-1">Tencent — 13B paramètres, qualité cinématique</p>
+          </div>
+          <span class="badge badge-purple">Hunyuan</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span>13B</div>
+          <div><span class="text-slate-500 block">Résolution</span>720p / 1280p</div>
+          <div><span class="text-slate-500 block">VRAM min.</span><span class="text-red-400">20–24 GB</span></div>
+          <div><span class="text-slate-500 block">VRAM fp8</span><span class="text-yellow-400">16 GB</span></div>
+          <div><span class="text-slate-500 block">Modes</span>T2V + I2V v1/v2</div>
+          <div><span class="text-slate-500 block">Durée</span>5 sec (129 frames)</div>
+        </div>
+        <div class="code-block mb-3">
+          <span class="comment"># Fichiers requis :</span><br>
+          diffusion_models/hunyuan_video_t2v_720p_bf16.safetensors<br>
+          text_encoders/clip_l.safetensors<br>
+          text_encoders/llava_llama3_fp8_scaled.safetensors<br>
+          vae/hunyuan_video_vae_bf16.safetensors
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-purple">⭐ Rival de Sora</span>
+          <span class="badge badge-red">RTX 4090 / 5080+</span>
+          <span class="badge badge-yellow">fp8 = 16 GB</span>
+        </div>
+        <a href="https://huggingface.co/tencent/HunyuanVideo" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <!-- LTX-Video 2 -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">LTX-Video 2 (19B)</h4>
+            <p class="text-xs text-slate-400 mt-1">Lightricks — temps réel sur GPU grand public</p>
+          </div>
+          <span class="badge badge-orange">LTX-2</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span>19B (GGUF disponible)</div>
+          <div><span class="text-slate-500 block">Résolution</span>480p → 4K (upscaler)</div>
+          <div><span class="text-slate-500 block">VRAM min.</span><span class="text-yellow-400">12 GB (GGUF Q4)</span></div>
+          <div><span class="text-slate-500 block">RTX 5090</span><span class="text-cyan-400">Q8 pleine qualité</span></div>
+          <div><span class="text-slate-500 block">Modes</span>T2V + I2V + Audio2V</div>
+          <div><span class="text-slate-500 block">Durée</span>5–10 sec + extension</div>
+        </div>
+        <div class="code-block mb-3">
+          <span class="comment"># Fichiers requis :</span><br>
+          unet/ltx-2-19b-dev_Q8_0.gguf<br>
+          text_encoders/gemma_3_12B_it.safetensors<br>
+          text_encoders/ltx-2-19b-embeddings_connector_dev_bf16.safetensors<br>
+          vae/LTX2_video_vae_bf16.safetensors<br>
+          latent_upscale_models/ltx-2-spatial-upscaler-x2-1.0.safetensors
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-orange">Audio-to-Video</span>
+          <span class="badge badge-green">GGUF = budget OK</span>
+          <span class="badge badge-yellow">RTX 4070+ recommandé</span>
+        </div>
+        <a href="https://huggingface.co/Lightricks/LTX-Video" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <!-- CogVideoX -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">CogVideoX 5B / 2B</h4>
+            <p class="text-xs text-slate-400 mt-1">Zhipu AI — haute qualité visuelle & effets</p>
+          </div>
+          <span class="badge badge-blue">CogVideo</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span>5B / 2B</div>
+          <div><span class="text-slate-500 block">Résolution</span>720×480</div>
+          <div><span class="text-slate-500 block">VRAM 5B</span><span class="text-yellow-400">24 GB (BF16) / 12 GB INT8</span></div>
+          <div><span class="text-slate-500 block">VRAM 2B</span><span class="text-green-400">12–16 GB</span></div>
+          <div><span class="text-slate-500 block">Modes</span>T2V + I2V</div>
+          <div><span class="text-slate-500 block">Usage</span>Marketing / Pro</div>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-blue">Haute fidélité</span>
+          <span class="badge badge-yellow">RTX 4080 recommandé</span>
+          <span class="badge badge-green">SAT BF16</span>
+        </div>
+        <a href="https://huggingface.co/THUDM/CogVideoX-5b" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace</a>
+      </div>
+
+      <!-- LTX-Video 2.3 -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">LTX-Video 2.3 (22B)</h4>
+            <p class="text-xs text-slate-400 mt-1">Lightricks — 4K natif, audio intégré, 10–14× plus rapide que Wan 2.2</p>
+          </div>
+          <span class="badge badge-orange">Mars 2026 🔥</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span><span class="text-cyan-400">22B</span></div>
+          <div><span class="text-slate-500 block">Résolution</span><span class="text-green-400">jusqu'à 4K / 50 FPS</span></div>
+          <div><span class="text-slate-500 block">VRAM 720p FP8</span><span class="text-green-400">16 GB</span></div>
+          <div><span class="text-slate-500 block">VRAM 4K FP16</span><span class="text-red-400">44 GB+</span></div>
+          <div><span class="text-slate-500 block">VRAM GGUF</span><span class="text-green-400">&lt; 12 GB (Q4)</span></div>
+          <div><span class="text-slate-500 block">Vitesse vs Wan 2.2</span><span class="text-cyan-400">10–14× plus rapide !</span></div>
+          <div><span class="text-slate-500 block">Modes</span><span>T2V + I2V + Audio2V + Extend</span></div>
+          <div><span class="text-slate-500 block">Portrait 9:16</span><span class="text-green-400">✅ Natif</span></div>
+          <div><span class="text-slate-500 block">ComfyUI support</span><span class="text-green-400">Natif v0.16.1+</span></div>
+          <div><span class="text-slate-500 block">Guidance scale</span><span>3.0–3.5</span></div>
+        </div>
+        <div class="code-block mb-3 text-xs">
+          <span class="comment"># Fichiers requis :</span><br>
+          unet/ltx-2.3-22b-distilled_transformer_fp8_input_scaled_v2.safetensors<br>
+          text_encoders/gemma_3_12B_it_fp8_e4m3fn.safetensors<br>
+          vae/LTX2_video_vae_bf16.safetensors<br>
+          <span class="comment"># Nodes ComfyUI natifs :</span><br>
+          LTXVSeparateAVLatent, LTXVAudioVAEDecode<br>
+          <span class="comment"># Contraintes :</span><br>
+          <span class="val">largeur & hauteur divisibles par 32</span><br>
+          <span class="val">frames = (N × 8) + 1</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-orange">⭐ Best Vidéo 2026</span>
+          <span class="badge badge-green">4K natif</span>
+          <span class="badge badge-cyan">Audio intégré</span>
+          <span class="badge badge-yellow">RTX 4080+ (720p)</span>
+          <span class="badge badge-blue">RTX 5090 (4K)</span>
+        </div>
+        <a href="https://huggingface.co/Lightricks/LTX-Video-2.3" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ HuggingFace (Lightricks)</a>
+      </div>
+
+      <!-- Mochi -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">Mochi 1</h4>
+            <p class="text-xs text-slate-400 mt-1">Genmo — mouvement fluide 30fps, physique réaliste</p>
+          </div>
+          <span class="badge badge-green">Mochi</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Paramètres</span>10B</div>
+          <div><span class="text-slate-500 block">Résolution</span>480P max</div>
+          <div><span class="text-slate-500 block">VRAM min.</span><span class="text-yellow-400">16–20 GB</span></div>
+          <div><span class="text-slate-500 block">GGUF Q4/Q8</span>dispo</div>
+          <div><span class="text-slate-500 block">FPS</span>30 fps</div>
+          <div><span class="text-slate-500 block">Durée</span>5 sec max</div>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-green">Mouvement naturel</span>
+          <span class="badge badge-blue">Physique simulée</span>
+        </div>
+      </div>
+
+      <!-- Pyramid Flow -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <h4 class="font-bold text-white text-lg">Pyramid Flow</h4>
+            <p class="text-xs text-slate-400 mt-1">Flow-matching — longues vidéos 768p (10 sec)</p>
+          </div>
+          <span class="badge badge-yellow">Pyramid</span>
+        </div>
+        <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-300 mb-4">
+          <div><span class="text-slate-500 block">Résolution</span>768p</div>
+          <div><span class="text-slate-500 block">Durée</span>10 sec</div>
+          <div><span class="text-slate-500 block">VRAM min.</span><span class="text-red-400">24 GB (BF16)</span></div>
+          <div><span class="text-slate-500 block">Multi-prompt</span>✅ Oui</div>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-yellow">Longues vidéos</span>
+          <span class="badge badge-red">RTX 4090 / 3090+</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tableau récap vidéo -->
+    <h3 class="text-lg font-bold text-white mb-4">📊 Tableau comparatif vidéo</h3>
+    <div class="overflow-x-auto rounded-xl border border-[#1e1e3f]">
+      <table class="gpu-table w-full text-sm">
+        <thead>
+          <tr>
+            <th class="text-left">Modèle</th>
+            <th>Résolution</th>
+            <th>VRAM min.</th>
+            <th>RTX 3060</th>
+            <th>RTX 4080</th>
+            <th>RTX 4090</th>
+            <th>RTX 5090</th>
+          </tr>
+        </thead>
+        <tbody class="text-xs">
+          <tr>
+            <td class="font-semibold text-cyan-400">Wan 2.1 (1.3B)</td>
+            <td class="text-center">480p</td>
+            <td class="text-center text-green-400">8 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-cyan-400">Wan 2.2 (14B)</td>
+            <td class="text-center">720p</td>
+            <td class="text-center text-yellow-400">16 GB</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-purple-400">HunyuanVideo fp8</td>
+            <td class="text-center">720p</td>
+            <td class="text-center text-yellow-400">16 GB</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center">⚠️</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-orange-400">LTX-2 (GGUF Q4)</td>
+            <td class="text-center">480p</td>
+            <td class="text-center text-yellow-400">12 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-blue-400">CogVideoX 2B</td>
+            <td class="text-center">720×480</td>
+            <td class="text-center text-green-400">12 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-green-400">Mochi 1 (GGUF Q4)</td>
+            <td class="text-center">480p</td>
+            <td class="text-center text-yellow-400">12 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-yellow-400">Pyramid Flow</td>
+            <td class="text-center">768p</td>
+            <td class="text-center text-red-400">24 GB</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(249,115,22,0.04)">
+            <td class="font-semibold text-orange-400">LTX-2.3 (GGUF Q4)</td>
+            <td class="text-center">720p</td>
+            <td class="text-center text-green-400">12 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(249,115,22,0.04)">
+            <td class="font-semibold text-orange-400">LTX-2.3 FP8 (720p)</td>
+            <td class="text-center">720p</td>
+            <td class="text-center text-yellow-400">16 GB</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(249,115,22,0.04)">
+            <td class="font-semibold text-orange-400">LTX-2.3 (4K)</td>
+            <td class="text-center text-cyan-400">4K</td>
+            <td class="text-center text-red-400">44 GB+</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-green-400">✅ (32 GB)</td>
+          </tr>
+          <tr style="background:rgba(0,229,255,0.03)">
+            <td class="font-semibold text-cyan-400">Z-Image Turbo</td>
+            <td class="text-center">1024px image</td>
+            <td class="text-center text-green-400">8 GB (FP8)</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(74,222,128,0.03)">
+            <td class="font-semibold text-green-400">Chroma (GGUF Q4)</td>
+            <td class="text-center">1024px image</td>
+            <td class="text-center text-green-400">6–8 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(168,85,247,0.03)">
+            <td class="font-semibold text-purple-400">FLUX.2 Klein 4B</td>
+            <td class="text-center">1024px image</td>
+            <td class="text-center text-green-400">8 GB</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(236,72,153,0.04)">
+            <td class="font-semibold text-pink-400">Ideogram 4.0 FP8</td>
+            <td class="text-center">2048px image</td>
+            <td class="text-center text-yellow-400">16 GB</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-yellow-400">⚠️ RAM off.</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+          <tr style="background:rgba(236,72,153,0.04)">
+            <td class="font-semibold text-pink-400">Ideogram 4.0 NVFP4</td>
+            <td class="text-center">2048px image</td>
+            <td class="text-center text-green-400">8–12 GB</td>
+            <td class="text-center text-yellow-400">⚠️</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+            <td class="text-center">✅</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-xs text-slate-500 mt-2">⚠️ = fonctionnel avec optimisations (lowvram, sequential offload) | ❌ = insuffisant</p>
+  </section>
+
+  <!-- ═══════════════════ TAB : COMPOSANTS ═══════════════════ -->
+  <section id="components" class="tab-panel reveal">
+    <h2 class="section-title mb-2">🧩 Composants ComfyUI</h2>
+    <p class="text-slate-400 text-sm mb-8">VAE, CLIP, Text Encoders, UNet/Diffusion Models, Upscalers — où les placer et lesquels choisir.</p>
+
+    <div class="grid md:grid-cols-2 gap-6">
+
+      <!-- TEXT ENCODERS -->
+      <div class="model-card p-6">
+        <h3 class="font-bold text-cyan-400 text-base mb-1 flex items-center gap-2">
+          <span class="text-2xl">📝</span> Text Encoders
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Convertissent vos prompts en vecteurs compris par le modèle</p>
+        <div class="code-block mb-4">📁 ComfyUI/models/text_encoders/</div>
+
+        <div class="space-y-3">
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">T5-XXL (GGUF)</span>
+              <span class="badge badge-cyan">FLUX / SD3.5 / Wan</span>
+            </div>
+            <div class="text-xs text-slate-400 space-y-1">
+              <div class="flex justify-between"><span>Q6_K</span><span class="text-cyan-400">3.91 GB — Recommandé</span></div>
+              <div class="flex justify-between"><span>Q8_0</span><span class="text-yellow-400">5.06 GB — ≈ fp16</span></div>
+              <div class="flex justify-between"><span>fp16</span><span class="text-red-400">9.53 GB — Haute VRAM</span></div>
+            </div>
+            <a href="https://huggingface.co/city96/t5-v1_1-xxl-encoder-gguf" target="_blank" class="text-xs text-cyan-400 hover:underline mt-2 block">→ city96/t5-v1_1-xxl-encoder-gguf</a>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">CLIP-L</span>
+              <span class="badge badge-blue">SD1.x / SDXL / FLUX / Hunyuan</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>clip_l.safetensors</span><span class="text-green-400">246 MB</span></div>
+            </div>
+            <a href="https://huggingface.co/Comfy-Org/stable-diffusion-3.5-fp8" target="_blank" class="text-xs text-cyan-400 hover:underline mt-1 block">→ Comfy-Org (text_encoders/clip_l)</a>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">CLIP-G</span>
+              <span class="badge badge-purple">SDXL / SD3.5</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>clip_g.safetensors</span><span class="text-green-400">~1.4 GB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">LLaVA-LLaMA3 (fp8)</span>
+              <span class="badge badge-purple">HunyuanVideo</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>llava_llama3_fp8_scaled.safetensors</span><span class="text-yellow-400">9.09 GB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">UMT5-XXL</span>
+              <span class="badge badge-cyan">Wan 2.x</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>umt5-xxl-enc-bf16.safetensors</span><span class="text-yellow-400">~10 GB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Gemma 3 12B</span>
+              <span class="badge badge-orange">LTX-Video 2</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>gemma_3_12B_it.safetensors</span><span class="text-red-400">~24 GB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Qwen2.5-VL 7B (FP8/GGUF)</span>
+              <span class="badge badge-yellow">Qwen-Image</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>qwen_2.5_vl_7b_fp8_scaled.safetensors</span><span class="text-yellow-400">~7 GB</span></div>
+              <div class="flex justify-between"><span>GGUF Q4 : Qwen2.5-VL-7B-Q4_K_XL.gguf</span><span class="text-green-400">~4.8 GB</span></div>
+              <p class="mt-1 text-slate-500">Text encoder dédié pour Qwen-Image-2512</p>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Qwen3 4B (Prompt LLM)</span>
+              <span class="badge badge-yellow">LLM Helper</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>models/text_encoders/Qwen3-4B-Instruct/</span><span class="text-green-400">~2.5 GB</span></div>
+              <p class="mt-1 text-slate-500">Générateur de prompts — tous modèles</p>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Qwen3 8B (Text Encoder Z-Image)</span>
+              <span class="badge badge-purple">FLUX.2 Klein / Z-Image</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>qwen_3_4b.safetensors</span><span class="text-green-400">~3 GB</span></div>
+              <p class="mt-1 text-slate-500">Encodeur requis pour Z-Image Turbo et FLUX.2 Klein 9B</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VAE -->
+      <div class="model-card p-6">
+        <h3 class="font-bold text-green-400 text-base mb-1 flex items-center gap-2">
+          <span class="text-2xl">🔮</span> VAE (Variational Autoencoder)
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Encode/décode les images entre l'espace pixel et l'espace latent</p>
+        <div class="code-block mb-4">📁 ComfyUI/models/vae/</div>
+
+        <div class="space-y-3">
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">FLUX VAE (ae.safetensors)</span>
+              <span class="badge badge-cyan">FLUX.1</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>ae.safetensors</span><span class="text-green-400">335 MB</span></div>
+              <p class="mt-1 text-slate-500">VAE 16 canaux — obligatoire pour FLUX</p>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">SDXL VAE (fp16-fix)</span>
+              <span class="badge badge-blue">SDXL</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>sdxl_vae.safetensors</span><span class="text-green-400">335 MB</span></div>
+              <p class="mt-1 text-slate-500">Version fp16-fix = moins d'artefacts NaN</p>
+            </div>
+            <a href="https://huggingface.co/madebyollin/sdxl-vae-fp16-fix" target="_blank" class="text-xs text-cyan-400 hover:underline mt-1 block">→ madebyollin/sdxl-vae-fp16-fix</a>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">HunyuanVideo VAE</span>
+              <span class="badge badge-purple">HunyuanVideo</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>hunyuan_video_vae_bf16.safetensors</span><span class="text-yellow-400">~1.4 GB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Wan 2.1 VAE</span>
+              <span class="badge badge-cyan">Wan 2.x</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>wan_2.1_vae.safetensors</span><span class="text-green-400">~450 MB</span></div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">LTX-2 VAE (vidéo + audio)</span>
+              <span class="badge badge-orange">LTX-Video 2</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>LTX2_video_vae_bf16.safetensors</div>
+              <div>LTX2_audio_vae_bf16.safetensors</div>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-pink-900/40">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">Flux2 VAE</span>
+              <span class="badge badge-red">Ideogram 4.0 / FLUX.2</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>flux2-vae.safetensors</span><span class="text-green-400">~335 MB</span></div>
+              <p class="mt-1 text-slate-500">VAE partagé Ideogram 4.0 + FLUX.2</p>
+            </div>
+          </div>
+
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">SD 1.5 VAE (kl-f8)</span>
+              <span class="badge badge-green">SD 1.x</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div class="flex justify-between"><span>vae-ft-mse-840000-ema-pruned.safetensors</span><span class="text-green-400">~335 MB</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UNET / DIFFUSION MODELS -->
+      <div class="model-card p-6">
+        <h3 class="font-bold text-purple-400 text-base mb-1 flex items-center gap-2">
+          <span class="text-2xl">🧠</span> UNet / Diffusion Models
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Le cœur du processus de débruitage — le modèle principal</p>
+        <div class="code-block mb-4">📁 ComfyUI/models/diffusion_models/ <br>📁 ComfyUI/models/unet/ (legacy)</div>
+
+        <div class="space-y-3">
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">FLUX.1 Dev (fp8)</span>
+              <span class="badge badge-cyan">Image</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>flux1-dev-fp8.safetensors — ~8 GB</div>
+              <p class="text-slate-500 mt-1">Dossier : diffusion_models/</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">FLUX GGUF (Q4–Q8)</span>
+              <span class="badge badge-purple">GGUF</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>flux1-dev-Q4_K_S.gguf → ~6 GB VRAM</div>
+              <div>flux1-dev-Q8_0.gguf → ~10 GB VRAM</div>
+              <p class="text-slate-500 mt-1">Nécessite le plugin ComfyUI-GGUF</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">HunyuanVideo (T2V / I2V)</span>
+              <span class="badge badge-purple">Vidéo</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>hunyuan_video_t2v_720p_bf16.safetensors</div>
+              <div>hunyuan_video_image_to_video_720p_bf16.safetensors</div>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">SDXL Base + Refiner</span>
+              <span class="badge badge-blue">Image</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>sd_xl_base_1.0.safetensors — 6.9 GB</div>
+              <div>sd_xl_refiner_1.0.safetensors — 6.1 GB</div>
+              <p class="text-slate-500 mt-1">Dossier : checkpoints/</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">SD 3.5 Large (fp8)</span>
+              <span class="badge badge-purple">Image</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>sd3.5_large_fp8_scaled.safetensors — ~8 GB</div>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">LTX-2 GGUF UNet</span>
+              <span class="badge badge-orange">Vidéo</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>ltx-2-19b-dev_Q8_0.gguf → dossier : unet/</div>
+              <div>ltx-2-19b-dev_Q4_K_M.gguf → 12 GB VRAM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPSCALERS -->
+      <div class="model-card p-6">
+        <h3 class="font-bold text-yellow-400 text-base mb-1 flex items-center gap-2">
+          <span class="text-2xl">🔭</span> Upscalers
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Super-résolution pour agrandir et améliorer la qualité des images/vidéos</p>
+        <div class="code-block mb-4">📁 ComfyUI/models/upscale_models/</div>
+
+        <div class="space-y-3">
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">RealESRGAN x4plus</span>
+              <span class="badge badge-green">⭐ Populaire</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>RealESRGAN_x4plus.pth — Upscale ×4</div>
+              <p class="text-slate-500 mt-1">Idéal photos / portraits réalistes</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">RealESRGAN x4plus Anime 6B</span>
+              <span class="badge badge-purple">Anime</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>RealESRGAN_x4plus_anime_6B.pth</div>
+              <p class="text-slate-500 mt-1">Optimisé dessin animé / illustration</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">4x-UltraSharp</span>
+              <span class="badge badge-cyan">Détails</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>4x-UltraSharp.pth — Upscale ×4 netteté max</div>
+              <p class="text-slate-500 mt-1">Excellent pour portraits & textures</p>
+            </div>
+            <a href="https://civitai.com/models/116225" target="_blank" class="text-xs text-cyan-400 hover:underline mt-1 block">→ CivitAI</a>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">ESRGAN x8 / x16</span>
+              <span class="badge badge-orange">Grande résolution</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>ESRGAN_4x.pth / 8x_NMKD-Superscale</div>
+              <p class="text-slate-500 mt-1">Upscale extrême — 8× ou 16×</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">4xFaceUpSharpDAT</span>
+              <span class="badge badge-blue">Visages</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>Spécialisé restauration de visages</div>
+              <p class="text-slate-500 mt-1">Complément idéal à GFPGAN/CodeFormer</p>
+            </div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-semibold text-sm text-white">LTX-2 Latent Upscaler</span>
+              <span class="badge badge-orange">Vidéo 2026</span>
+            </div>
+            <div class="text-xs text-slate-400">
+              <div>ltx-2-spatial-upscaler-x2-1.0.safetensors</div>
+              <p class="text-slate-500 mt-1">Dossier : latent_upscale_models/</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- CLIP Vision -->
+        <h4 class="font-bold text-blue-400 text-sm mt-5 mb-3 flex items-center gap-2">
+          <span>👁</span> CLIP Vision
+          <span class="code-block text-xs px-2 py-0 ml-2" style="display:inline;background:transparent;border:none;color:#64748b">📁 models/clip_vision/</span>
+        </h4>
+        <div class="space-y-2">
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f] text-xs text-slate-400">
+            <div class="flex justify-between font-semibold text-white mb-1"><span>CLIP Vision H (ViT-H)</span><span class="badge badge-cyan">Wan I2V / SDXL</span></div>
+            <div>clip_vision_h.safetensors — ~2 GB</div>
+          </div>
+          <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f] text-xs text-slate-400">
+            <div class="flex justify-between font-semibold text-white mb-1"><span>LLaVA Vision (HunyuanVideo)</span><span class="badge badge-purple">Hunyuan I2V</span></div>
+            <div>llava_llama3_vision.safetensors — ~1.1 GB</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TAB : GPU ═══════════════════ -->
+  <section id="gpu-table" class="tab-panel reveal">
+    <h2 class="section-title mb-2">⚡ Guide GPU NVIDIA RTX 3060 → 5090</h2>
+    <p class="text-slate-400 text-sm mb-8">Compatibilité et performances par GPU pour ComfyUI — image et vidéo.</p>
+
+    <div class="overflow-x-auto rounded-xl border border-[#1e1e3f] mb-10">
+      <table class="gpu-table w-full text-sm">
+        <thead>
+          <tr>
+            <th class="text-left">GPU</th>
+            <th>VRAM</th>
+            <th>Archi.</th>
+            <th>SDXL</th>
+            <th>FLUX Dev</th>
+            <th>Wan 14B</th>
+            <th>HunyuanVid</th>
+            <th>LTX-2 GGUF</th>
+            <th class="text-left">Mode recommandé</th>
+          </tr>
+        </thead>
+        <tbody class="text-xs">
+          <tr>
+            <td class="font-bold text-yellow-400">RTX 3060 (6 GB)</td>
+            <td class="text-center text-red-400">6 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-yellow-400">⚠️</td>
+            <td class="text-center text-yellow-400">GGUF Q3</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-yellow-400">Q4</td>
+            <td class="text-slate-400">--lowvram / GGUF Q3-Q4</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 3060 (12 GB)</td>
+            <td class="text-center text-green-400">12 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">FP8 / GGUF Q8</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-green-400">Q4-Q6</td>
+            <td class="text-slate-400">--normalvram + GGUF</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 3070 (8 GB)</td>
+            <td class="text-center text-yellow-400">8 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">FP8</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-yellow-400">Q4</td>
+            <td class="text-slate-400">--normalvram</td>
+          </tr>
+          <tr style="background:rgba(0,229,255,0.04)">
+            <td class="font-bold text-cyan-300">RTX 3070 Ti (8 GB) ★</td>
+            <td class="text-center text-yellow-400">8 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">FP8 / GGUF Q5</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-yellow-400">Q4–Q5</td>
+            <td class="text-slate-400">--normalvram --fp8_e4m3fn</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 3080 (10/12 GB)</td>
+            <td class="text-center text-cyan-400">10–12 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">FP8 ✅</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-green-400">Q6-Q8</td>
+            <td class="text-slate-400">--highvram (10 GB) / normal</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">RTX 3090 / 3090 Ti</td>
+            <td class="text-center text-cyan-400">24 GB</td>
+            <td class="text-center">Ampere</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">fp16 ✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">⚠️ serrée</td>
+            <td class="text-center text-green-400">Q8</td>
+            <td class="text-slate-400">--highvram</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 4060 Ti (8 GB)</td>
+            <td class="text-center text-yellow-400">8 GB</td>
+            <td class="text-center">Ada</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">FP8</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-yellow-400">Q4</td>
+            <td class="text-slate-400">--normalvram</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">RTX 4060 Ti (16 GB)</td>
+            <td class="text-center text-cyan-400">16 GB</td>
+            <td class="text-center">Ada</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">fp16 ✅</td>
+            <td class="text-center text-yellow-400">⚠️ Q4</td>
+            <td class="text-center text-yellow-400">⚠️ fp8</td>
+            <td class="text-center text-green-400">Q8</td>
+            <td class="text-slate-400">--highvram</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">RTX 4070 Super</td>
+            <td class="text-center text-cyan-400">12 GB</td>
+            <td class="text-center">Ada</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">FP8 ✅</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-green-400">Q6-Q8</td>
+            <td class="text-slate-400">--highvram</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">RTX 4080 (16 GB)</td>
+            <td class="text-center text-cyan-400">16 GB</td>
+            <td class="text-center">Ada</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">fp16 ✅</td>
+            <td class="text-center text-green-400">✅ 1.3B</td>
+            <td class="text-center text-yellow-400">fp8 ✅</td>
+            <td class="text-center text-green-400">Q8</td>
+            <td class="text-slate-400">--highvram</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">RTX 4090 (24 GB)</td>
+            <td class="text-center text-green-400">24 GB</td>
+            <td class="text-center">Ada</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">fp16 ✅</td>
+            <td class="text-center text-green-400">14B ✅</td>
+            <td class="text-center text-green-400">✅ bf16</td>
+            <td class="text-center text-green-400">Q8</td>
+            <td class="text-slate-400">--highvram (tout en VRAM)</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 5060 Ti (16 GB)</td>
+            <td class="text-center text-cyan-400">16 GB</td>
+            <td class="text-center">Blackwell</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">fp16 ✅</td>
+            <td class="text-center text-yellow-400">⚠️</td>
+            <td class="text-center text-yellow-400">fp8</td>
+            <td class="text-center text-green-400">Q8</td>
+            <td class="text-slate-400">--highvram + NVFP4</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-green-400">RTX 5070 Ti</td>
+            <td class="text-center text-cyan-400">16 GB</td>
+            <td class="text-center">Blackwell</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-yellow-400">⚠️</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-slate-400">--highvram + NVFP4</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-purple-400">RTX 5080 (24 GB)</td>
+            <td class="text-center text-green-400">24 GB</td>
+            <td class="text-center">Blackwell</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅ bf16</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-slate-400">--highvram + NVFP4</td>
+          </tr>
+          <tr style="background:rgba(168,85,247,0.05)">
+            <td class="font-bold text-purple-300">RTX 5090 (32 GB) 👑</td>
+            <td class="text-center text-green-400">32 GB</td>
+            <td class="text-center">Blackwell</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅</td>
+            <td class="text-center text-green-400">✅ Q8</td>
+            <td class="text-slate-400">Tout sans compromis</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Flags de lancement -->
+    <!-- Ideogram 4.0 box -->
+    <div class="model-card p-5 mb-8" style="border-color:#ec4899;border-left:3px solid #ec4899">
+      <h3 class="font-bold text-pink-400 text-base mb-3 flex items-center gap-2">
+        <span class="text-xl">🎨</span> Ideogram 4.0 — Compatibilité GPU détaillée
+      </h3>
+      <div class="grid md:grid-cols-4 gap-3 text-xs">
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+          <div class="font-bold text-red-400 mb-1">RTX 3060–3070 Ti (8 GB)</div>
+          <div class="text-slate-400 space-y-1">
+            <div>FP8 : <span class="text-red-400">❌ insuffisant</span></div>
+            <div>NVFP4 : <span class="text-yellow-400">⚠️ RAM offload lent</span></div>
+            <div>Résolution : max 1024px</div>
+            <div class="text-slate-500 text-xs">Turbo 12 steps conseillé</div>
+          </div>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+          <div class="font-bold text-yellow-400 mb-1">RTX 3080–4070 (10–12 GB)</div>
+          <div class="text-slate-400 space-y-1">
+            <div>FP8 : <span class="text-yellow-400">⚠️ serré</span></div>
+            <div>NVFP4 : <span class="text-green-400">✅ OK</span></div>
+            <div>Résolution : 1024–1536px</div>
+            <div class="text-slate-500 text-xs">--normalvram recommandé</div>
+          </div>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+          <div class="font-bold text-cyan-400 mb-1">RTX 4080 / 3090 (16–24 GB)</div>
+          <div class="text-slate-400 space-y-1">
+            <div>FP8 : <span class="text-green-400">✅ confortable</span></div>
+            <div>Temps 48 steps : <span class="text-green-400">~5 min</span></div>
+            <div>Résolution : 2048px natif</div>
+            <div class="text-slate-500 text-xs">--highvram</div>
+          </div>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f]">
+          <div class="font-bold text-purple-400 mb-1">RTX 4090 / 5080 / 5090</div>
+          <div class="text-slate-400 space-y-1">
+            <div>FP8 + NVFP4 : <span class="text-green-400">✅</span></div>
+            <div>Temps turbo : <span class="text-green-400">&lt; 1 min</span></div>
+            <div>2K fluide, batches OK</div>
+            <div class="text-slate-500 text-xs">NVFP4 = RTX 5090 optimal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="text-lg font-bold text-white mb-4">🚀 Flags de lancement ComfyUI par GPU</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div class="model-card p-4">
+        <div class="badge badge-red mb-2">6 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 3060 6GB / 4060</div>
+        <div class="code-block text-xs">
+          <span class="flag">--lowvram</span> <span class="flag">--fp8_e4m3fn</span><br>
+          <span class="flag">--preview-method</span> <span class="val">none</span>
+        </div>
+      </div>
+      <div class="model-card p-4">
+        <div class="badge badge-yellow mb-2">8–10 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 3070 / 3080 10G / 4060 Ti</div>
+        <div class="code-block text-xs">
+          <span class="flag">--normalvram</span> <span class="flag">--fp8_e4m3fn</span>
+        </div>
+      </div>
+      <div class="model-card p-4">
+        <div class="badge badge-cyan mb-2">8 GB VRAM — Ampere Ti</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 3070 Ti ★</div>
+        <div class="code-block text-xs">
+          <span class="flag">--normalvram</span> <span class="flag">--fp8_e4m3fn</span><br>
+          <span class="comment"># GGUF Q4–Q5 pour FLUX</span><br>
+          <span class="comment"># Légèrement + rapide que 3070</span><br>
+          <span class="comment"># LTX-2.3 GGUF Q3 possible</span>
+        </div>
+      </div>
+
+      <div class="model-card p-4">
+        <div class="badge badge-cyan mb-2">12 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 3060 12GB / 4070 Super</div>
+        <div class="code-block text-xs">
+          <span class="flag">--highvram</span> <span class="flag">--fp8_e4m3fn</span><br>
+          <span class="comment"># ou --normalvram si workflow complexe</span>
+        </div>
+      </div>
+      <div class="model-card p-4">
+        <div class="badge badge-cyan mb-2">16 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 4060 Ti 16G / 4080 / 5060 Ti</div>
+        <div class="code-block text-xs">
+          <span class="flag">--highvram</span><br>
+          <span class="comment"># Activer xFormers si dispo</span>
+        </div>
+      </div>
+      <div class="model-card p-4">
+        <div class="badge badge-green mb-2">24 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 3090 / 4090 / 5080</div>
+        <div class="code-block text-xs">
+          <span class="flag">--highvram</span><br>
+          <span class="comment"># Tout en VRAM, pas d'offload</span>
+        </div>
+      </div>
+      <div class="model-card p-4">
+        <div class="badge badge-purple mb-2">32 GB VRAM</div>
+        <div class="font-semibold text-sm text-white mb-2">RTX 5090 👑</div>
+        <div class="code-block text-xs">
+          <span class="flag">--highvram</span> <span class="flag">--cuda-malloc</span><br>
+          <span class="comment"># NVFP4 pour modèles Blackwell</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RTX 3070 Ti fiche dédiée -->
+    <div class="model-card p-6 mb-6" style="border-color:#22d3ee;border-left:3px solid #22d3ee">
+      <h3 class="font-bold text-cyan-300 text-lg mb-1 flex items-center gap-2">
+        <span class="text-2xl">⭐</span> RTX 3070 Ti — Fiche Détaillée (8 GB VRAM)
+      </h3>
+      <p class="text-xs text-slate-400 mb-4">GPU Ampere mid-range — 6144 CUDA cores, 256-bit bus, bandwidth 608 GB/s. Légèrement plus rapide que le 3070 grâce au bus mémoire élargi.</p>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div>
+          <div class="text-xs font-bold text-green-400 mb-2">✅ Modèles Image compatibles</div>
+          <ul class="text-xs text-slate-300 space-y-1">
+            <li>→ FLUX.1 Dev <span class="text-yellow-400">GGUF Q5</span> (~8 GB)</li>
+            <li>→ FLUX.1 Schnell <span class="text-green-400">FP8</span> ✅</li>
+            <li>→ SDXL fp16 <span class="text-green-400">✅ natif</span></li>
+            <li>→ FLUX.2 Klein 4B <span class="text-green-400">✅</span></li>
+            <li>→ Z-Image Turbo <span class="text-yellow-400">GGUF Q4</span></li>
+            <li>→ Chroma <span class="text-yellow-400">GGUF Q4–Q5</span></li>
+            <li>→ SD 3.5 Large <span class="text-yellow-400">FP8 serré</span></li>
+            <li>→ Qwen-Image GGUF <span class="text-yellow-400">Q3–Q4</span></li>
+          </ul>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-yellow-400 mb-2">⚠️ Modèles Vidéo (optimisé)</div>
+          <ul class="text-xs text-slate-300 space-y-1">
+            <li>→ LTX-Video (v1) <span class="text-green-400">✅ rapide</span></li>
+            <li>→ LTX-2 GGUF <span class="text-yellow-400">Q3–Q4 (~8 GB)</span></li>
+            <li>→ LTX-2.3 GGUF <span class="text-yellow-400">Q3_K_S possible</span></li>
+            <li>→ Wan 2.1 1.3B <span class="text-yellow-400">⚠️ serré</span></li>
+            <li>→ CogVideoX 2B <span class="text-yellow-400">⚠️ avec offload</span></li>
+            <li>→ HunyuanVideo <span class="text-red-400">❌ VRAM insuffisant</span></li>
+          </ul>
+        </div>
+        <div>
+          <div class="text-xs font-bold text-cyan-400 mb-2">⚙️ Config recommandée</div>
+          <div class="code-block text-xs">
+            python main.py<br>
+            <span class="flag">--normalvram</span><br>
+            <span class="flag">--fp8_e4m3fn</span><br>
+            <span class="flag">--preview-method</span> <span class="val">none</span><br><br>
+            <span class="comment"># Nodes speed must-have :</span><br>
+            + Nunchaku (FLUX ×5–8)<br>
+            + TeaCache thresh 0.25<br>
+            + T5 offload → CPU<br>
+            + SageAttention (LTX)<br><br>
+            <span class="comment"># RAM : 32 GB conseillé</span><br>
+            <span class="comment"># SSD NVMe obligatoire</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VRAM tips -->
+    <div class="model-card p-6">
+      <h3 class="font-bold text-cyan-400 mb-3">📌 Conseils VRAM par scénario</h3>
+      <div class="grid md:grid-cols-3 gap-4 text-xs text-slate-300">
+        <div>
+          <div class="font-bold text-white mb-2">🎓 Débutant / Budget</div>
+          <ul class="space-y-1 text-slate-400">
+            <li>• SDXL fp16 ou FLUX FP8</li>
+            <li>• 1 LoRA à la fois</li>
+            <li>• Résolution : 512–768px</li>
+            <li>• Steps : 20 max</li>
+            <li>• Upscale en 2 passes</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-bold text-white mb-2">🎨 Créateur / Mid-range</div>
+          <ul class="space-y-1 text-slate-400">
+            <li>• FLUX Dev fp8 + LoRAs</li>
+            <li>• 1024px natif</li>
+            <li>• Wan 2.1 (1.3B) vidéo</li>
+            <li>• ControlNet supporté</li>
+            <li>• Upscale 4K possible</li>
+          </ul>
+        </div>
+        <div>
+          <div class="font-bold text-white mb-2">🚀 Pro / High-end</div>
+          <ul class="space-y-1 text-slate-400">
+            <li>• FLUX Dev fp16 complet</li>
+            <li>• HunyuanVideo / Wan 14B</li>
+            <li>• LTX-2 4K upscale</li>
+            <li>• Multi-LoRA + ControlNet</li>
+            <li>• Batch processing large</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TAB : OPTIMISATION ═══════════════════ -->
+  <section id="tips" class="tab-panel reveal">
+    <h2 class="section-title mb-2">💡 Astuces d'Optimisation ComfyUI</h2>
+    <p class="text-slate-400 text-sm mb-8">Trucs et techniques des experts pour +40% de vitesse et moins de VRAM.</p>
+
+    <!-- Flags & args -->
+    <h3 class="font-bold text-cyan-400 text-lg mb-4">⚙️ Arguments de lancement</h3>
+    <div class="grid md:grid-cols-2 gap-4 mb-10">
+      <div class="tip-card p-5">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl mt-1">🏁</span>
+          <div class="flex-1">
+            <h4 class="font-bold text-white mb-2">Flags VRAM essentiels</h4>
+            <div class="code-block text-xs mb-2">
+              <span class="comment"># RTX 3060 6GB</span><br>
+              python main.py <span class="flag">--lowvram</span><br><br>
+              <span class="comment"># RTX 3060 12GB / 3070</span><br>
+              python main.py <span class="flag">--normalvram</span><br><br>
+              <span class="comment"># RTX 3080+ / 4070+</span><br>
+              python main.py <span class="flag">--highvram</span><br><br>
+              <span class="comment"># Pas de preview = économise VRAM</span><br>
+              python main.py <span class="flag">--preview-method</span> <span class="val">none</span>
+            </div>
+            <p class="text-xs text-slate-400">--lowvram active le CPU offloading. --highvram garde tout en VRAM.</p>
+          </div>
+        </div>
+      </div>
+      <div class="tip-card p-5">
+        <div class="flex items-start gap-3">
+          <span class="text-2xl mt-1">⚡</span>
+          <div class="flex-1">
+            <h4 class="font-bold text-white mb-2">Flags de vitesse</h4>
+            <div class="code-block text-xs mb-2">
+              <span class="comment"># xFormers : +15-25% vitesse</span><br>
+              python main.py <span class="flag">--xformers</span><br><br>
+              <span class="comment"># Force FP16 : +30-40%</span><br>
+              python main.py <span class="flag">--force-fp16</span><br><br>
+              <span class="comment"># FP8 précision native</span><br>
+              python main.py <span class="flag">--fp8_e4m3fn</span><br><br>
+              <span class="comment"># CUDA malloc optimisé (RTX 50xx)</span><br>
+              python main.py <span class="flag">--cuda-malloc</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Techniques avancées -->
+    <h3 class="font-bold text-purple-400 text-lg mb-4">🧠 Techniques avancées</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🎯</div>
+        <h4 class="font-bold text-white mb-2">TeaCache</h4>
+        <p class="text-xs text-slate-400 mb-2">Double la vitesse de génération FLUX avec une légère perte de qualité.</p>
+        <div class="code-block text-xs">Valeur : <span class="val">0.25–0.30</span><br>Nœud : ComfyUI-TeaCache</div>
+        <span class="badge badge-green mt-2 block w-fit">×2 vitesse FLUX</span>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">📦</div>
+        <h4 class="font-bold text-white mb-2">GGUF Quantization</h4>
+        <p class="text-xs text-slate-400 mb-2">Réduit drastiquement la VRAM nécessaire avec peu de perte de qualité.</p>
+        <div class="code-block text-xs">
+          Q4_K_M : <span class="val">-50% VRAM</span>, -5% qualité<br>
+          Q5_K_M : <span class="val">-40% VRAM</span>, -2% qualité<br>
+          Q6_K   : <span class="val">-30% VRAM</span>, ≈ identique<br>
+          Q8_0   : <span class="val">-15% VRAM</span>, ≈ fp16
+        </div>
+        <a href="https://github.com/city96/ComfyUI-GGUF" target="_blank" class="text-xs text-cyan-400 hover:underline mt-2 block">→ Plugin ComfyUI-GGUF</a>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">💾</div>
+        <h4 class="font-bold text-white mb-2">CPU Offloading CLIP/T5</h4>
+        <p class="text-xs text-slate-400 mb-2">Charger les text encoders en RAM CPU, libère la VRAM pour le UNet.</p>
+        <div class="code-block text-xs">
+          <span class="comment"># DualCLIPLoader → device: cpu</span><br>
+          T5-XXL Q8 en RAM = <span class="val">5 GB RAM</span><br>
+          VRAM libérée pour UNet<br>
+          Surcoût : ~5–10% de temps
+        </div>
+        <span class="badge badge-blue mt-2 block w-fit">Recommandé RTX 3060</span>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🔢</div>
+        <h4 class="font-bold text-white mb-2">CFG Scale optimal</h4>
+        <p class="text-xs text-slate-400 mb-2">Un CFG mal réglé détruit la qualité et gaspille du temps.</p>
+        <div class="code-block text-xs">
+          FLUX : <span class="val">1.0–3.5</span> (très bas !)<br>
+          SD 1.5 : <span class="val">7–12</span><br>
+          SDXL : <span class="val">5–9</span><br>
+          SD3.5 : <span class="val">4.5–7</span><br>
+          Vidéo Wan/Hunyuan : <span class="val">6–7</span>
+        </div>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🎲</div>
+        <h4 class="font-bold text-white mb-2">Sampler & Steps optimaux</h4>
+        <p class="text-xs text-slate-400 mb-2">Le bon sampler économise des steps sans perdre en qualité.</p>
+        <div class="code-block text-xs">
+          FLUX : <span class="val">Euler</span>, 15–20 steps<br>
+          SDXL : <span class="val">DPM++ 2M Karras</span>, 25–30<br>
+          SD3.5 : <span class="val">DPM++ 2M</span>, 20–28<br>
+          Distillé (Schnell/Turbo) : <span class="val">Euler</span>, 4–8<br>
+          Plateau qualité : 30 steps max
+        </div>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🖼</div>
+        <h4 class="font-bold text-white mb-2">Upscale en 2 passes (Hires Fix)</h4>
+        <p class="text-xs text-slate-400 mb-2">Générez en petite résolution + upscale = moins de VRAM, meilleure qualité.</p>
+        <div class="code-block text-xs">
+          1️⃣ Génération : <span class="val">512–768px</span><br>
+          2️⃣ Upscale x2 : RealESRGAN<br>
+          3️⃣ img2img : <span class="val">denoise 0.4–0.6</span><br>
+          Résultat : <span class="val">1024–2048px</span> net
+        </div>
+        <span class="badge badge-yellow mt-2 block w-fit">-40% VRAM vs direct</span>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🔀</div>
+        <h4 class="font-bold text-white mb-2">Prompt Weighting ComfyUI</h4>
+        <p class="text-xs text-slate-400 mb-2">Syntaxe différente de A1111 — attention à ne pas les mélanger.</p>
+        <div class="code-block text-xs">
+          <span class="comment"># Emphasis (ComfyUI natif)</span><br>
+          (keyword:<span class="val">1.3</span>) = fort<br>
+          (keyword:<span class="val">0.7</span>) = atténué<br><br>
+          <span class="comment"># Plugin BREAK support</span><br>
+          positive, BREAK, negative
+        </div>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">📋</div>
+        <h4 class="font-bold text-white mb-2">Cache & Model Switching</h4>
+        <p class="text-xs text-slate-400 mb-2">Évitez de changer de modèle entre chaque génération — le rechargement coûte cher.</p>
+        <div class="code-block text-xs">
+          <span class="comment"># Astuce : grouper toutes les</span><br>
+          <span class="comment"># générations du même modèle</span><br>
+          <span class="comment"># avant de changer</span><br><br>
+          RAM 32 GB+ = modèles restent<br>
+          en RAM = rechargement rapide
+        </div>
+        <span class="badge badge-blue mt-2 block w-fit">RAM 32-64 GB recommandé</span>
+      </div>
+
+      <div class="tip-card p-5">
+        <div class="text-2xl mb-2">🔌</div>
+        <h4 class="font-bold text-white mb-2">Plugins indispensables</h4>
+        <p class="text-xs text-slate-400 mb-2">Extensions ComfyUI qui changent la donne :</p>
+        <ul class="text-xs text-slate-300 space-y-1">
+          <li>→ <span class="text-cyan-400">ComfyUI-Manager</span> — gestionnaire tout-en-un</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-GGUF</span> — modèles quantifiés</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-TeaCache</span> — ×2 vitesse FLUX</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-Impact-Pack</span> — detection & SAM</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-AutomaticCFG</span> — CFG dynamique</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-VideoHelperSuite</span> — gestion vidéo</li>
+          <li>→ <span class="text-cyan-400">ComfyUI-WanVideoWrapper</span> — Wan 2.x</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Tips vidéo spécifiques -->
+    <h3 class="font-bold text-orange-400 text-lg mb-4">🎬 Astuces spécifiques génération vidéo</h3>
+    <div class="grid md:grid-cols-2 gap-4 mb-10">
+      <div class="tip-card p-5" style="border-left-color:#f97316">
+        <h4 class="font-bold text-white mb-3">⚙️ Optimiser Wan 2.x sur VRAM limitée</h4>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Utiliser le modèle <strong class="text-white">1.3B</strong> (8 GB VRAM) vs 14B (16 GB+)</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Résolution de base <strong class="text-white">512×512</strong> puis upscale Topaz / LTX</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>16 fps → upscale frames avec <strong class="text-white">RIFE</strong> à 30fps</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Sequential offload : <code class="text-cyan-400">--lowvram</code> pour libérer le UNet entre les frames</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>5 secondes = 81 frames à 16fps</span></div>
+        </div>
+      </div>
+      <div class="tip-card p-5" style="border-left-color:#f97316">
+        <h4 class="font-bold text-white mb-3">🎥 Qualité vidéo — prompts efficaces</h4>
+        <div class="space-y-2 text-xs text-slate-300">
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Structure : [Sujet] [Action] [Scène] [Style] [Qualité]</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Toujours préciser le mouvement : <em>"slowly", "panning", "close-up"</em></span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Image de départ haute résolution pour I2V (meilleurs résultats)</span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Negative prompt : <em>"blur, artifacts, watermark, static"</em></span></div>
+          <div class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span><span>Wan 2.x : bilingual (EN + ZH) prompt = meilleur résultat</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips système -->
+    <h3 class="font-bold text-green-400 text-lg mb-4">🖥️ Optimisations système</h3>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">🧲</div>
+        <h4 class="font-semibold text-white text-sm mb-2">RAM système</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Minimum : 16 GB DDR4</li>
+          <li>• Recommandé : 32 GB</li>
+          <li>• Pro vidéo : 64 GB+</li>
+          <li>• Les modèles restent cachés en RAM entre les générations</li>
+        </ul>
+      </div>
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">💿</div>
+        <h4 class="font-semibold text-white text-sm mb-2">Stockage SSD</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Utiliser un NVMe SSD</li>
+          <li>• Chargement 5× plus rapide</li>
+          <li>• Prévoir 100–500 GB pour les modèles</li>
+          <li>• Éviter les HDD = trop lents</li>
+        </ul>
+      </div>
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">🌡️</div>
+        <h4 class="font-semibold text-white text-sm mb-2">Refroidissement GPU</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Surveiller avec GPU-Z ou HWiNFO64</li>
+          <li>• Temp cible : &lt; 80°C sous charge</li>
+          <li>• Throttling si trop chaud = -30% perf</li>
+          <li>• Nettoyer les ventilateurs régulièrement</li>
+        </ul>
+      </div>
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">🔧</div>
+        <h4 class="font-semibold text-white text-sm mb-2">Drivers NVIDIA</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Toujours garder les drivers à jour</li>
+          <li>• CUDA 12.x requis pour les modèles 2025</li>
+          <li>• PyTorch 2.x recommandé</li>
+          <li>• Python 3.10 ou 3.11</li>
+        </ul>
+      </div>
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">🧹</div>
+        <h4 class="font-semibold text-white text-sm mb-2">Libérer la VRAM</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Fermer Chrome / Discord (accél. GPU)</li>
+          <li>• Désactiver le GPU pour le bureau Windows</li>
+          <li>• Node "Free GPU Memory" en fin de workflow</li>
+          <li>• Redémarrer ComfyUI entre gros modèles</li>
+        </ul>
+      </div>
+      <div class="tip-card p-4">
+        <div class="text-xl mb-2">🤖</div>
+        <h4 class="font-semibold text-white text-sm mb-2">Nunchaku (RTX 3060+)</h4>
+        <ul class="text-xs text-slate-400 space-y-1">
+          <li>• Accélère FLUX de ×5–8</li>
+          <li>• FLUX sur 6 GB : 20–25 sec</li>
+          <li>• Utilise INT4 spécialisé NVIDIA</li>
+          <li>• ComfyUI-Nunchaku plugin</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Config recommandée par budget -->
+    <div class="mt-10 model-card p-6">
+      <h3 class="font-bold text-white text-lg mb-5">💰 Configurations recommandées par budget</h3>
+      <div class="grid md:grid-cols-3 gap-6">
+        <div>
+          <div class="badge badge-yellow mb-3 text-sm py-1 px-3">Budget ~400€</div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">GPU</span><span class="font-semibold">RTX 3060 12 GB / 3070 Ti</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">RAM</span><span>32 GB DDR4</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Modèles</span><span>FLUX FP8, SDXL, Qwen-Image GGUF, Chroma</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Flag</span><span class="font-mono text-cyan-400">--normalvram --fp8</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Usage</span><span>Images HD + LTX vidéo GGUF</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="badge badge-cyan mb-3 text-sm py-1 px-3">Mid-range ~900€</div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">GPU</span><span class="font-semibold">RTX 4070 Ti / 4080 16G</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">RAM</span><span>32–64 GB DDR5</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Modèles</span><span>FLUX fp16, Wan 14B, LTX-2</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Flag</span><span class="font-mono text-cyan-400">--highvram</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Usage</span><span>Images 4K + vidéos 720p</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="badge badge-purple mb-3 text-sm py-1 px-3">Pro 2000€+</div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">GPU</span><span class="font-semibold">RTX 4090 / 5080 / 5090</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">RAM</span><span>64–128 GB DDR5</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Modèles</span><span>Tout sans compromis</span></div>
+            <div class="flex justify-between border-b border-[#1e1e3f] pb-1"><span class="text-slate-500">Flag</span><span class="font-mono text-cyan-400">--highvram --cuda-malloc</span></div>
+            <div class="flex justify-between"><span class="text-slate-500">Usage</span><span>Tout : 4K vidéo, HunyuanVideo, LTX-2 4K</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ TAB : NODES SPEED ═══════════════════ -->
+  <section id="nodes-speed" class="tab-panel reveal">
+    <h2 class="section-title mb-2">⚙️ Nodes d'Optimisation de Vitesse</h2>
+    <p class="text-slate-400 text-sm mb-8">Les nodes ComfyUI qui font vraiment la différence — testés et approuvés par la communauté.</p>
+
+    <!-- GRILLE PRINCIPALE DES NODES -->
+    <div class="grid md:grid-cols-2 gap-6 mb-10">
+
+      <!-- TeaCache -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🍵</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">TeaCache</h3>
+              <p class="text-xs text-slate-400">welltop-cn/ComfyUI-TeaCache</p>
+            </div>
+          </div>
+          <span class="badge badge-green">×1.5 → ×3</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Cache les résultats intermédiaires du débruitage pour éviter de recalculer des étapes similaires. Compatible FLUX, HunyuanVideo, Wan 2.x, LTX-Video, Chroma, SD3.5.</p>
+
+        <div class="overflow-x-auto rounded-lg border border-[#1e1e3f] mb-4">
+          <table class="gpu-table w-full text-xs">
+            <thead><tr><th class="text-left">Modèle</th><th>rel_l1_thresh</th><th>Gain</th><th>Qualité</th></tr></thead>
+            <tbody>
+              <tr><td class="text-cyan-400">FLUX Dev</td><td class="text-center font-mono">0.25–0.30</td><td class="text-center text-green-400">×2</td><td class="text-center text-yellow-400">-5%</td></tr>
+              <tr><td class="text-cyan-400">FLUX (lossless)</td><td class="text-center font-mono">0.10</td><td class="text-center text-green-400">×1.4</td><td class="text-center text-green-400">≈ 0%</td></tr>
+              <tr><td class="text-purple-400">HunyuanVideo</td><td class="text-center font-mono">0.15</td><td class="text-center text-green-400">×1.6</td><td class="text-center text-green-400">lossless</td></tr>
+              <tr><td class="text-cyan-400">Wan 2.x</td><td class="text-center font-mono">0.08–0.10</td><td class="text-center text-green-400">×1.5–2</td><td class="text-center text-yellow-400">légère</td></tr>
+              <tr><td class="text-green-400">Chroma</td><td class="text-center font-mono">0.20</td><td class="text-center text-green-400">×1.5</td><td class="text-center text-yellow-400">légère</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code-block text-xs mb-3">
+          <span class="comment"># Installation via Manager : rechercher "TeaCache"</span><br>
+          <span class="comment"># Placement : après "Load Diffusion Model" ou "Load LoRA"</span><br>
+          <span class="comment"># Compatibilité LoRA ✅ | ControlNet ✅</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-green">⭐ Le plus stable</span>
+          <span class="badge badge-cyan">FLUX + Vidéo ✓</span>
+          <span class="badge badge-blue">LoRA compatible</span>
+        </div>
+        <a href="https://github.com/welltop-cn/ComfyUI-TeaCache" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: welltop-cn/ComfyUI-TeaCache</a>
+      </div>
+
+      <!-- SageAttention -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🧿</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">SageAttention 2.x</h3>
+              <p class="text-xs text-slate-400">via KJNodes — Patch Sage Attention</p>
+            </div>
+          </div>
+          <span class="badge badge-purple">+30 → +50%</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Remplace l'attention standard par une attention optimisée INT8/FP8. Particulièrement efficace pour les modèles vidéo (Wan 2.2, HunyuanVideo) et FLUX. Nécessite Triton.</p>
+
+        <div class="space-y-2 text-xs text-slate-300 mb-4">
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>FLUX : +30% (23.25s → 16.46s)</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>Wan 2.2 : +40–50% (indispensable !)</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>HunyuanVideo : +25–35%</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>SDXL : +15–20%</span></div>
+          <div class="flex items-center gap-2"><span class="text-yellow-400">⚠️</span><span>Requiert Python 3.12 + Triton</span></div>
+          <div class="flex items-center gap-2"><span class="text-yellow-400">⚠️</span><span>Windows : compilation manuelle nécessaire</span></div>
+        </div>
+        <div class="code-block text-xs mb-3">
+          <span class="comment"># 1. Installer Triton</span><br>
+          pip install triton<br>
+          <span class="comment"># 2. Installer SageAttention</span><br>
+          pip install sageattention<br>
+          <span class="comment"># 3. Lancer ComfyUI avec le flag</span><br>
+          python main.py <span class="flag">--use-sage-attention</span><br>
+          <span class="comment"># 4. Node KJNodes : "Patch Sage Attention"</span><br>
+          <span class="comment"># Après "Load Diffusion Model" dans le workflow</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-purple">⭐ Indispensable Wan 2.2</span>
+          <span class="badge badge-cyan">RTX 3060+ ✓</span>
+          <span class="badge badge-yellow">Linux = plus facile</span>
+        </div>
+        <a href="https://github.com/kijai/ComfyUI-KJNodes" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: kijai/ComfyUI-KJNodes</a>
+      </div>
+
+      <!-- MagCache -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🧲</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">MagCache</h3>
+              <p class="text-xs text-slate-400">Zehong-Ma/ComfyUI-MagCache</p>
+            </div>
+          </div>
+          <span class="badge badge-cyan">×2 → ×3</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Alternative à TeaCache plus agressive — meilleur gain de vitesse brut mais peut introduire du grain si mal réglé. Supporte FLUX, Wan 2.1, HunyuanVideo, Chroma.</p>
+
+        <div class="overflow-x-auto rounded-lg border border-[#1e1e3f] mb-4">
+          <table class="gpu-table w-full text-xs">
+            <thead><tr><th class="text-left">Modèle</th><th>magcache_thresh</th><th>Gain brut</th></tr></thead>
+            <tbody>
+              <tr><td class="text-cyan-400">FLUX Dev</td><td class="text-center font-mono">0.1, 0.1, 5</td><td class="text-center text-green-400">×2.5 (~4 sec)</td></tr>
+              <tr><td class="text-purple-400">HunyuanVideo</td><td class="text-center font-mono">0.08</td><td class="text-center text-green-400">×2</td></tr>
+              <tr><td class="text-cyan-400">Wan 2.1</td><td class="text-center font-mono">0.05–0.10</td><td class="text-center text-green-400">×2–3</td></tr>
+              <tr><td class="text-green-400">Chroma</td><td class="text-center font-mono">0.10</td><td class="text-center text-green-400">×1.8</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-lg p-3 border border-[#1e1e3f] text-xs text-slate-400 mb-3">
+          <span class="text-yellow-400">⚠️ Conseil :</span> Commencer avec magcache_thresh bas (0.05–0.08) et augmenter progressivement. Des valeurs trop hautes créent du grain / artefacts. TeaCache reste plus stable pour les débutants.
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-cyan">Vitesse max</span>
+          <span class="badge badge-yellow">Réglage minutieux requis</span>
+        </div>
+        <a href="https://github.com/Zehong-Ma/ComfyUI-MagCache" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: Zehong-Ma/ComfyUI-MagCache</a>
+      </div>
+
+      <!-- WaveSpeed -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🌊</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">WaveSpeed</h3>
+              <p class="text-xs text-slate-400">chengzeyi/Comfy-WaveSpeed</p>
+            </div>
+          </div>
+          <span class="badge badge-blue">×1.5 → ×2</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Alternative à TeaCache/MagCache — approche différente du cache de diffusion. Certains utilisateurs rapportent de meilleurs résultats que MagCache pour SDXL. Plus simple à configurer.</p>
+
+        <div class="space-y-2 text-xs text-slate-300 mb-4">
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>SDXL : résultats souvent supérieurs à MagCache</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>FLUX : légèrement inférieur à TeaCache</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>Configuration plus simple = moins de réglages</span></div>
+          <div class="flex items-center gap-2"><span class="text-blue-400">ℹ️</span><span>Bon choix de remplacement si TeaCache incompatible</span></div>
+        </div>
+        <div class="code-block text-xs mb-3">
+          <span class="comment"># Via ComfyUI Manager : "WaveSpeed"</span><br>
+          <span class="comment"># Ou : git clone dans custom_nodes/</span><br>
+          git clone https://github.com/chengzeyi/Comfy-WaveSpeed
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-blue">SDXL favori</span>
+          <span class="badge badge-green">Simple à configurer</span>
+        </div>
+        <a href="https://github.com/chengzeyi/Comfy-WaveSpeed" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: chengzeyi/Comfy-WaveSpeed</a>
+      </div>
+
+      <!-- Torch Compile / KJNodes -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">🔥</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">Torch Compile (KJNodes)</h3>
+              <p class="text-xs text-slate-400">kijai/ComfyUI-KJNodes — Compile Model node</p>
+            </div>
+          </div>
+          <span class="badge badge-yellow">+10 → +30%</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Compile le modèle PyTorch avec Triton pour une exécution noyau optimisée. Première génération plus lente (warm-up), les suivantes gagnent 10–30%. Patch inclus pour LoRA.</p>
+
+        <div class="space-y-2 text-xs text-slate-300 mb-4">
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span><strong class="text-white">Linux + Triton</strong> : gain réel de 20–30%</span></div>
+          <div class="flex items-center gap-2"><span class="text-red-400">⚠️</span><span><strong class="text-white">Windows PyTorch 2.7</strong> : aucun gain mesuré</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>Combine avec SageAttention = synergie</span></div>
+          <div class="flex items-center gap-2"><span class="text-blue-400">ℹ️</span><span>1er run : compile ~2 min → tous les suivants : rapides</span></div>
+        </div>
+        <div class="code-block text-xs mb-3">
+          <span class="comment"># Flags complémentaires (PyTorch 2.7+)</span><br>
+          python main.py <span class="flag">--fast</span> <span class="val">fp16_accumulation</span><br>
+          <span class="comment"># Mode : inductor (recommandé)</span><br>
+          <span class="comment"># Activer fullgraph=True pour max perf</span><br>
+          <span class="comment"># Installe Triton : pip install triton</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-yellow">Linux recommandé</span>
+          <span class="badge badge-green">Synergie SageAttention</span>
+          <span class="badge badge-blue">LoRA patch inclus</span>
+        </div>
+        <a href="https://github.com/kijai/ComfyUI-KJNodes" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: kijai/ComfyUI-KJNodes</a>
+      </div>
+
+      <!-- Nunchaku -->
+      <div class="model-card p-6">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">⚡</span>
+            <div>
+              <h3 class="font-bold text-white text-lg">Nunchaku (INT4 MIT)</h3>
+              <p class="text-xs text-slate-400">mit-han-lab/ComfyUI-nunchaku</p>
+            </div>
+          </div>
+          <span class="badge badge-red">×5 → ×8 !</span>
+        </div>
+        <p class="text-xs text-slate-300 mb-4">Quantification INT4 spécialisée NVIDIA par MIT. Transforme FLUX Dev sur RTX 3060 6GB de 2–3 min → 20–25 secondes. Le gain le plus important pour GPU à VRAM limitée.</p>
+
+        <div class="space-y-2 text-xs text-slate-300 mb-4">
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>FLUX Dev sur RTX 3060 6GB : <strong class="text-white">20–25 sec</strong> (vs 2–3 min)</span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>FLUX Schnell sur 6GB : <strong class="text-white">&lt; 5 sec</strong></span></div>
+          <div class="flex items-center gap-2"><span class="text-green-400">✅</span><span>Perte de qualité minimale avec SVDQuant</span></div>
+          <div class="flex items-center gap-2"><span class="text-yellow-400">⚠️</span><span>Modèles Nunchaku séparés (pas les GGUF standard)</span></div>
+          <div class="flex items-center gap-2"><span class="text-blue-400">ℹ️</span><span>Compatible LoRA Nunchaku uniquement</span></div>
+        </div>
+        <div class="code-block text-xs mb-3">
+          <span class="comment"># Via Manager : "nunchaku"</span><br>
+          <span class="comment"># Modèles spéciaux Nunchaku requis :</span><br>
+          mit-han-lab/svdq-int4-flux.1-dev<br>
+          mit-han-lab/svdq-int4-flux.1-schnell<br>
+          <span class="comment"># Pas de modèles GGUF standard !</span>
+        </div>
+        <div class="flex flex-wrap gap-1">
+          <span class="badge badge-red">⭐ RTX 3060 6GB Must-Have</span>
+          <span class="badge badge-green">×5–8 sur FLUX</span>
+          <span class="badge badge-yellow">Modèles dédiés</span>
+        </div>
+        <a href="https://github.com/mit-han-lab/ComfyUI-nunchaku" target="_blank" class="mt-3 text-xs text-cyan-400 hover:underline block">→ GitHub: mit-han-lab/ComfyUI-nunchaku</a>
+      </div>
+
+    </div>
+
+    <!-- Tableau comparatif nodes -->
+    <h3 class="font-bold text-white text-lg mb-4">📊 Comparatif Nodes — Gain de vitesse par modèle</h3>
+    <div class="overflow-x-auto rounded-xl border border-[#1e1e3f] mb-10">
+      <table class="gpu-table w-full text-xs">
+        <thead>
+          <tr>
+            <th class="text-left">Node</th>
+            <th>FLUX</th>
+            <th>Wan 2.x</th>
+            <th>HunyuanVid</th>
+            <th>SDXL</th>
+            <th>Chroma</th>
+            <th>LTX-2.x</th>
+            <th>OS</th>
+            <th class="text-left">Difficulté</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="font-bold text-green-400">TeaCache</td>
+            <td class="text-center text-green-400">×1.4–2</td>
+            <td class="text-center text-green-400">×1.5–2</td>
+            <td class="text-center text-green-400">×1.6</td>
+            <td class="text-center text-yellow-400">⚠️ partiel</td>
+            <td class="text-center text-green-400">×1.5</td>
+            <td class="text-center text-green-400">×1.5</td>
+            <td class="text-center">Win/Linux</td>
+            <td class="text-green-400">⭐ Facile</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-purple-400">SageAttention</td>
+            <td class="text-center text-green-400">+30%</td>
+            <td class="text-center text-green-400">+40–50%</td>
+            <td class="text-center text-green-400">+25–35%</td>
+            <td class="text-center text-green-400">+15–20%</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center text-green-400">+25%</td>
+            <td class="text-center text-yellow-400">Linux+</td>
+            <td class="text-yellow-400">⭐⭐ Moyen</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-cyan-400">MagCache</td>
+            <td class="text-center text-green-400">×2–2.5</td>
+            <td class="text-center text-green-400">×2–3</td>
+            <td class="text-center text-green-400">×2</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center text-green-400">×1.8</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center">Win/Linux</td>
+            <td class="text-yellow-400">⭐⭐ Réglage</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-blue-400">WaveSpeed</td>
+            <td class="text-center text-yellow-400">×1.5</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center text-green-400">×1.5–2</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center text-yellow-400">partiel</td>
+            <td class="text-center">Win/Linux</td>
+            <td class="text-green-400">⭐ Facile</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-yellow-400">Torch Compile</td>
+            <td class="text-center text-green-400">+10–30%</td>
+            <td class="text-center text-green-400">+10–20%</td>
+            <td class="text-center text-yellow-400">+10%</td>
+            <td class="text-center text-green-400">+10–20%</td>
+            <td class="text-center text-yellow-400">+10%</td>
+            <td class="text-center text-green-400">+15%</td>
+            <td class="text-center text-yellow-400">Linux mieux</td>
+            <td class="text-red-400">⭐⭐⭐ Avancé</td>
+          </tr>
+          <tr>
+            <td class="font-bold text-red-400">Nunchaku INT4</td>
+            <td class="text-center text-green-400">×5–8 !</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center text-red-400">❌</td>
+            <td class="text-center">Win/Linux</td>
+            <td class="text-yellow-400">⭐⭐ Modèles séparés</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Autres nodes utiles -->
+    <h3 class="font-bold text-cyan-400 text-lg mb-4">🔧 Autres Nodes Utiles pour la Performance</h3>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">🎯</span>
+          <h4 class="font-bold text-white text-sm">Free GPU Memory</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">Libère la VRAM entre deux générations lourdes. Essentiel en workflow multi-modèles.</p>
+        <div class="code-block text-xs">Node : "Free GPU Memory"<br><span class="comment"># Placer à la fin du workflow</span><br><span class="comment"># Vide le cache CUDA</span></div>
+        <span class="badge badge-blue mt-2 block w-fit">Natif ComfyUI</span>
+      </div>
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">📦</span>
+          <h4 class="font-bold text-white text-sm">Load Diffusion Model (FP8)</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">Charger les modèles en FP8 natif depuis le node pour économiser -30% VRAM sans perte visible.</p>
+        <div class="code-block text-xs">weight_dtype: <span class="val">fp8_e4m3fn</span><br><span class="comment"># ou fp8_e5m2 = plus rapide</span></div>
+        <span class="badge badge-yellow mt-2 block w-fit">-30% VRAM</span>
+      </div>
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">🧩</span>
+          <h4 class="font-bold text-white text-sm">ModelSamplingFlux</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">Contrôle le max_shift et base_shift pour améliorer la qualité FLUX/Chroma. Essentiel pour Chroma.</p>
+        <div class="code-block text-xs">max_shift : <span class="val">1.5</span><br>base_shift : <span class="val">0.5</span><br><span class="comment"># Réduit trypophobia Chroma</span></div>
+        <span class="badge badge-cyan mt-2 block w-fit">Qualité Chroma</span>
+      </div>
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">🔀</span>
+          <h4 class="font-bold text-white text-sm">AutomaticCFG</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">CFG dynamique — ajuste automatiquement la guidance scale à chaque step pour une meilleure qualité sans surcoût.</p>
+        <div class="code-block text-xs">Plugin : <span class="val">ComfyUI-AutomaticCFG</span><br><span class="comment"># Meilleur que CFG fixe</span></div>
+        <span class="badge badge-green mt-2 block w-fit">Qualité +</span>
+      </div>
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">🖼</span>
+          <h4 class="font-bold text-white text-sm">VAE Decode (Tiled)</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">Décode le latent en tuiles pour les très grandes résolutions. Évite les OOM sur des images 4K+.</p>
+        <div class="code-block text-xs">Node : <span class="val">VAEDecodeTiled</span><br>tile_size : 512<br><span class="comment"># Indispensable 4K sur 12–16 GB</span></div>
+        <span class="badge badge-yellow mt-2 block w-fit">OOM prevention</span>
+      </div>
+
+      <div class="tip-card p-4">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xl">🎬</span>
+          <h4 class="font-bold text-white text-sm">RIFE Frame Interpolation</h4>
+        </div>
+        <p class="text-xs text-slate-400 mb-2">Génère moins de frames vidéo (16fps) et interpole jusqu'à 30/60fps. Économise jusqu'à 50% de temps de génération.</p>
+        <div class="code-block text-xs">Plugin : <span class="val">ComfyUI-RIFE-VFI</span><br>16fps → <span class="val">30fps</span> interpolé<br><span class="comment"># Qualité quasi-identique</span></div>
+        <span class="badge badge-orange mt-2 block w-fit">Vidéo : -50% temps</span>
+      </div>
+
+    </div>
+
+    <!-- Workflow de combinaison optimale -->
+    <div class="model-card p-6">
+      <h3 class="font-bold text-white text-lg mb-4">🏆 Combinaisons Nodes Recommandées par Scénario</h3>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="badge badge-red mb-3">RTX 3060 6–8 GB</div>
+          <div class="text-xs text-white font-bold mb-2">Stack FLUX optimal :</div>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2"><span class="text-red-400">1.</span> <span>Nunchaku INT4 (×5–8)</span></div>
+            <div class="flex items-center gap-2"><span class="text-yellow-400">2.</span> <span>T5 offload CPU (DualCLIPLoader)</span></div>
+            <div class="flex items-center gap-2"><span class="text-cyan-400">3.</span> <span>TeaCache thresh 0.25</span></div>
+            <div class="flex items-center gap-2"><span class="text-green-400">4.</span> <span>--lowvram --fp8_e4m3fn</span></div>
+            <div class="flex items-center gap-2"><span class="text-purple-400">5.</span> <span>Preview None</span></div>
+          </div>
+          <div class="mt-3 text-xs text-green-400 font-bold">Résultat : ~20s / image FLUX ✅</div>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="badge badge-cyan mb-3">RTX 3080/4070 12–16 GB</div>
+          <div class="text-xs text-white font-bold mb-2">Stack FLUX + Vidéo :</div>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2"><span class="text-red-400">1.</span> <span>SageAttention (--use-sage-attention)</span></div>
+            <div class="flex items-center gap-2"><span class="text-yellow-400">2.</span> <span>TeaCache thresh 0.20</span></div>
+            <div class="flex items-center gap-2"><span class="text-cyan-400">3.</span> <span>FP8 weight_dtype sur Load Model</span></div>
+            <div class="flex items-center gap-2"><span class="text-green-400">4.</span> <span>--highvram --xformers</span></div>
+            <div class="flex items-center gap-2"><span class="text-purple-400">5.</span> <span>RIFE pour vidéo 16→30fps</span></div>
+          </div>
+          <div class="mt-3 text-xs text-green-400 font-bold">Résultat : ~8s FLUX, Wan 1.3B OK ✅</div>
+        </div>
+        <div class="bg-[#0a0a1a] rounded-xl p-4 border border-[#1e1e3f]">
+          <div class="badge badge-purple mb-3">RTX 4090 / 5080+ 24–32 GB</div>
+          <div class="text-xs text-white font-bold mb-2">Stack PRO ultime :</div>
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2"><span class="text-red-400">1.</span> <span>SageAttention 2.x</span></div>
+            <div class="flex items-center gap-2"><span class="text-yellow-400">2.</span> <span>Torch Compile (inductor)</span></div>
+            <div class="flex items-center gap-2"><span class="text-cyan-400">3.</span> <span>TeaCache ou MagCache</span></div>
+            <div class="flex items-center gap-2"><span class="text-green-400">4.</span> <span>--highvram --cuda-malloc</span></div>
+            <div class="flex items-center gap-2"><span class="text-purple-400">5.</span> <span>NVFP4 (RTX 5090 uniquement)</span></div>
+          </div>
+          <div class="mt-3 text-xs text-green-400 font-bold">Résultat : FLUX ~3s, Wan 14B vidéo ✅</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<!-- ════════════════════════════════════════ FOOTER ════════════════════════════════════════ -->
+<footer class="border-t border-[#1e1e3f] py-10 px-4 mt-10">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-8 mb-8">
+      <div>
+        <h4 class="font-bold text-white mb-3">📚 Ressources officielles</h4>
+        <ul class="space-y-1.5 text-sm text-slate-400">
+          <li><a href="https://github.com/comfyanonymous/ComfyUI" target="_blank" class="hover:text-cyan-400 transition">→ ComfyUI GitHub</a></li>
+          <li><a href="https://comfyui-wiki.com" target="_blank" class="hover:text-cyan-400 transition">→ ComfyUI Wiki</a></li>
+          <li><a href="https://docs.comfy.org" target="_blank" class="hover:text-cyan-400 transition">→ Docs officiels</a></li>
+          <li><a href="https://civitai.com" target="_blank" class="hover:text-cyan-400 transition">→ CivitAI (modèles)</a></li>
+          <li><a href="https://huggingface.co" target="_blank" class="hover:text-cyan-400 transition">→ HuggingFace</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-white mb-3">🔌 Plugins ComfyUI</h4>
+        <ul class="space-y-1.5 text-sm text-slate-400">
+          <li><a href="https://github.com/Comfy-Org/ComfyUI-Manager" target="_blank" class="hover:text-cyan-400 transition">→ ComfyUI-Manager</a></li>
+          <li><a href="https://github.com/city96/ComfyUI-GGUF" target="_blank" class="hover:text-cyan-400 transition">→ ComfyUI-GGUF (city96)</a></li>
+          <li><a href="https://github.com/welltop-cn/ComfyUI-TeaCache" target="_blank" class="hover:text-cyan-400 transition">→ TeaCache (speed ×2)</a></li>
+          <li><a href="https://github.com/kijai/ComfyUI-KJNodes" target="_blank" class="hover:text-cyan-400 transition">→ KJNodes (SageAttn / Compile)</a></li>
+          <li><a href="https://github.com/Zehong-Ma/ComfyUI-MagCache" target="_blank" class="hover:text-cyan-400 transition">→ MagCache (speed ×2–3)</a></li>
+          <li><a href="https://github.com/chengzeyi/Comfy-WaveSpeed" target="_blank" class="hover:text-cyan-400 transition">→ WaveSpeed</a></li>
+          <li><a href="https://github.com/mit-han-lab/ComfyUI-nunchaku" target="_blank" class="hover:text-cyan-400 transition">→ Nunchaku INT4 (speed ×5–8)</a></li>
+          <li><a href="https://github.com/ltdrdata/ComfyUI-Impact-Pack" target="_blank" class="hover:text-cyan-400 transition">→ Impact Pack</a></li>
+          <li><a href="https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite" target="_blank" class="hover:text-cyan-400 transition">→ VideoHelperSuite</a></li>
+          <li><a href="https://github.com/kijai/ComfyUI-WanVideoWrapper" target="_blank" class="hover:text-cyan-400 transition">→ WanVideoWrapper</a></li>
+          <li><a href="https://github.com/lodestone-rock/ComfyUI_FluxMod" target="_blank" class="hover:text-cyan-400 transition">→ FluxMod (Chroma loader)</a></li>
+          <li><a href="https://github.com/1038lab/ComfyUI-QwenVL" target="_blank" class="hover:text-cyan-400 transition">→ ComfyUI-QwenVL (Qwen3-VL)</a></li>
+          <li><a href="https://huggingface.co/Comfy-Org/Ideogram-4" target="_blank" class="hover:text-cyan-400 transition">→ Ideogram 4.0 (Comfy-Org)</a></li>
+          <li><a href="https://github.com/ideogram-oss/ideogram4" target="_blank" class="hover:text-cyan-400 transition">→ Ideogram 4.0 GitHub officiel</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-white mb-3">💬 Communauté</h4>
+        <ul class="space-y-1.5 text-sm text-slate-400">
+          <li><a href="https://reddit.com/r/comfyui" target="_blank" class="hover:text-cyan-400 transition">→ r/comfyui (Reddit)</a></li>
+          <li><a href="https://discord.gg/comfyui" target="_blank" class="hover:text-cyan-400 transition">→ Discord ComfyUI</a></li>
+          <li><a href="https://reddit.com/r/StableDiffusion" target="_blank" class="hover:text-cyan-400 transition">→ r/StableDiffusion</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-[#1e1e3f] pt-6 text-center">
+      <p class="text-xs text-slate-500">
+        Guide ComfyUI 2025/2026 — Modèles Image & Vidéo — GPU NVIDIA RTX 3060 → RTX 5090<br>
+        Informations mises à jour régulièrement. Vérifiez les dépôts officiels pour les dernières versions.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── TAB SYSTEM ──
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const idMap = {
+      images: 'models-img',
+      videos: 'models-vid',
+      components: 'components',
+      gpu: 'gpu-table',
+      tips: 'tips',
+      nodes: 'nodes-speed'
+    };
+    const panel = document.getElementById(idMap[name] || 'models-img');
+    if (panel) { panel.classList.add('active'); panel.classList.add('visible'); }
+    const btns = document.querySelectorAll('.tab-btn');
+    const map = { images: 0, videos: 1, components: 2, gpu: 3, tips: 4, nodes: 5 };
+    if (btns[map[name]] !== undefined) btns[map[name]].classList.add('active');
+    window.scrollTo({ top: 150, behavior: 'smooth' });
+  }
+
+  // ── SCROLL REVEAL ──
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.05 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── VRAM BARS ANIMATION ──
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('.vram-bar').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.width = w; }, 100);
+        });
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.model-card').forEach(card => barObserver.observe(card));
+
+  // ── ACTIVE TAB ON SCROLL ──
+  // Reveal active panel on load
+  document.querySelectorAll('.tab-panel.active').forEach(p => p.classList.add('visible'));
+</script>
+</body>
+</html>
